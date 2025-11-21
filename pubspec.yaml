@@ -38,6 +38,8 @@ dependencies:
   firebase_auth: ^4.16.0
   google_sign_in: ^7.2.0
   flutter_signin_button: ^2.1.1
+  dartz: ^0.10.1
+  flutter_riverpod: ^2.6.1
 
 dev_dependencies:
   flutter_test:

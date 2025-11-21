@@ -4,7 +4,7 @@
 
 ### 1️⃣ 인증 및 보안
 
-**Google 소셜 로그인**: Firebase Authentication을 통한 Google 계정 간편 로그인 및 회원가입
+**회원가입 및 로그인**: Firebase Authentication을 통한 이메일/비밀번호 회원가입 및 로그인
 
 **앱 잠금**: 앱 실행 시 PIN 번호 또는 지문을 요구하는 잠금 화면 기능
 
