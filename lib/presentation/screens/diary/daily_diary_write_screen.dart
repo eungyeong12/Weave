@@ -1,10 +1,12 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:weave/di/injector.dart';
+import 'package:weave/presentation/widgets/diary/image_list_section.dart';
+import 'package:weave/presentation/widgets/diary/diary_text_field.dart';
+import 'package:weave/presentation/widgets/diary/save_button.dart';
 
 class DailyDiaryWriteScreen extends ConsumerStatefulWidget {
   final DateTime selectedDate;
@@ -234,38 +236,9 @@ class _DailyDiaryWriteScreenState extends ConsumerState<DailyDiaryWriteScreen> {
           ),
         ),
         actions: [
-          Consumer(
-            builder: (context, ref, _) {
-              final state = ref.watch(dailyDiaryWriteViewModelProvider);
-              final isContentEmpty = _diaryController.text.trim().isEmpty;
-              final isDisabled = state.isLoading || isContentEmpty;
-
-              return TextButton(
-                onPressed: isDisabled ? null : _save,
-                style: TextButton.styleFrom(
-                  splashFactory: NoSplash.splashFactory,
-                ),
-                child: state.isLoading
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.green,
-                          ),
-                        ),
-                      )
-                    : Text(
-                        '저장',
-                        style: TextStyle(
-                          color: isContentEmpty ? Colors.grey : Colors.green,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-              );
-            },
+          SaveButton(
+            onSave: _save,
+            isContentEmpty: _diaryController.text.trim().isEmpty,
           ),
         ],
       ),
@@ -281,151 +254,16 @@ class _DailyDiaryWriteScreenState extends ConsumerState<DailyDiaryWriteScreen> {
             child: Column(
               children: [
                 // 사진 추가 영역
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final imageHeight = 120.0;
-                      final imageWidth = imageHeight * 2 / 3; // 2:3 비율
-                      return SizedBox(
-                        height: imageHeight,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _images.length + 1, // 사진들 + 추가 버튼
-                          itemBuilder: (context, index) {
-                            if (index == _images.length) {
-                              // 사진 추가 버튼
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: GestureDetector(
-                                  onTap: _addImage,
-                                  child: Container(
-                                    width: imageWidth,
-                                    height: imageHeight,
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade100,
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: Colors.grey.shade300,
-                                        width: 1,
-                                        style: BorderStyle.solid,
-                                      ),
-                                    ),
-                                    child: Center(
-                                      child: Icon(
-                                        Icons.add_photo_alternate,
-                                        size: 32,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }
-                            // 사진 아이템
-                            final imageFile = _images[index];
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: Stack(
-                                children: [
-                                  Container(
-                                    width: imageWidth,
-                                    height: imageHeight,
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade200,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: kIsWeb
-                                          ? Image.network(
-                                              imageFile.path,
-                                              width: imageWidth,
-                                              height: imageHeight,
-                                              fit: BoxFit.cover,
-                                              errorBuilder:
-                                                  (context, error, stackTrace) {
-                                                    return const Icon(
-                                                      Icons.image,
-                                                      size: 50,
-                                                      color: Colors.grey,
-                                                    );
-                                                  },
-                                            )
-                                          : Image.file(
-                                              File(imageFile.path),
-                                              width: imageWidth,
-                                              height: imageHeight,
-                                              fit: BoxFit.cover,
-                                              errorBuilder:
-                                                  (context, error, stackTrace) {
-                                                    return const Icon(
-                                                      Icons.image,
-                                                      size: 50,
-                                                      color: Colors.grey,
-                                                    );
-                                                  },
-                                            ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    top: 4,
-                                    right: 4,
-                                    child: GestureDetector(
-                                      onTap: () => _removeImage(index),
-                                      child: Container(
-                                        padding: const EdgeInsets.all(4),
-                                        decoration: const BoxDecoration(
-                                          color: Colors.red,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(
-                                          Icons.close,
-                                          size: 16,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  ),
+                ImageListSection(
+                  images: _images,
+                  onAddImage: _addImage,
+                  onRemoveImage: _removeImage,
                 ),
                 // 일기 텍스트 입력 영역
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Container(
-                    constraints: const BoxConstraints(minHeight: 540),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF6F9F2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: TextField(
-                      controller: _diaryController,
-                      focusNode: _diaryFocusNode,
-                      minLines: null,
-                      maxLines: null,
-                      expands: false,
-                      textAlignVertical: TextAlignVertical.top,
-                      onChanged: (_) => setState(() {}),
-                      decoration: InputDecoration(
-                        hintText: '오늘 하루를 기록해보세요',
-                        hintStyle: TextStyle(color: Colors.grey.shade400),
-                        filled: true,
-                        fillColor: Colors.transparent,
-                        hoverColor: Colors.transparent,
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        contentPadding: const EdgeInsets.all(16),
-                      ),
-                    ),
-                  ),
+                DiaryTextField(
+                  controller: _diaryController,
+                  focusNode: _diaryFocusNode,
+                  onChanged: (_) => setState(() {}),
                 ),
               ],
             ),
