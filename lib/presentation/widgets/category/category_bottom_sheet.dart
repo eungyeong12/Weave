@@ -4,7 +4,11 @@ import 'package:weave/presentation/screens/movie/movie_search_screen.dart';
 import 'package:weave/presentation/screens/performance/performance_search_screen.dart';
 
 class CategoryBottomSheet {
-  static void show(BuildContext context, Function(String) onCategorySelected) {
+  static void show(
+    BuildContext context,
+    Function(String) onCategorySelected, {
+    DateTime? selectedDate,
+  }) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -49,7 +53,8 @@ class CategoryBottomSheet {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const BookSearchScreen(),
+                            builder: (context) =>
+                                BookSearchScreen(selectedDate: selectedDate),
                           ),
                         );
                       },
@@ -62,7 +67,8 @@ class CategoryBottomSheet {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const MovieSearchScreen(),
+                            builder: (context) =>
+                                MovieSearchScreen(selectedDate: selectedDate),
                           ),
                         );
                       },
@@ -75,8 +81,9 @@ class CategoryBottomSheet {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                                const PerformanceSearchScreen(),
+                            builder: (context) => PerformanceSearchScreen(
+                              selectedDate: selectedDate,
+                            ),
                           ),
                         );
                       },

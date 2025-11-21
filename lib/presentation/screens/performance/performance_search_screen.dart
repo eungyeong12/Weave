@@ -6,7 +6,9 @@ import 'package:weave/presentation/widgets/search/search_bar.dart';
 import 'package:weave/presentation/widgets/performance/performance_search_results.dart';
 
 class PerformanceSearchScreen extends ConsumerStatefulWidget {
-  const PerformanceSearchScreen({super.key});
+  final DateTime? selectedDate;
+
+  const PerformanceSearchScreen({super.key, this.selectedDate});
 
   @override
   ConsumerState<PerformanceSearchScreen> createState() =>
@@ -99,6 +101,7 @@ class _PerformanceSearchScreenState
                 child: PerformanceSearchResults(
                   searchController: _searchController,
                   getProxiedImageUrl: _getProxiedImageUrl,
+                  selectedDate: widget.selectedDate,
                 ),
               ),
             ),

@@ -9,7 +9,9 @@ import 'package:weave/presentation/widgets/book/book_search_empty_state.dart';
 import 'package:weave/presentation/widgets/movie/movie_search_results_list.dart';
 
 class MovieSearchScreen extends ConsumerStatefulWidget {
-  const MovieSearchScreen({super.key});
+  final DateTime? selectedDate;
+
+  const MovieSearchScreen({super.key, this.selectedDate});
 
   @override
   ConsumerState<MovieSearchScreen> createState() => _MovieSearchScreenState();
@@ -120,6 +122,7 @@ class _MovieSearchScreenState extends ConsumerState<MovieSearchScreen> {
                     return MovieSearchResultsList(
                       movies: state.movies,
                       getProxiedImageUrl: _getProxiedImageUrl,
+                      selectedDate: widget.selectedDate,
                     );
                   },
                 ),

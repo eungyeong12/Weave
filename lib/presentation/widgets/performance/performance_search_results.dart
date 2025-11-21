@@ -9,11 +9,13 @@ import 'package:weave/presentation/widgets/performance/performance_search_result
 class PerformanceSearchResults extends ConsumerWidget {
   final TextEditingController searchController;
   final String Function(String) getProxiedImageUrl;
+  final DateTime? selectedDate;
 
   const PerformanceSearchResults({
     super.key,
     required this.searchController,
     required this.getProxiedImageUrl,
+    this.selectedDate,
   });
 
   @override
@@ -39,6 +41,7 @@ class PerformanceSearchResults extends ConsumerWidget {
     return PerformanceSearchResultsList(
       performances: state.performances,
       getProxiedImageUrl: getProxiedImageUrl,
+      selectedDate: selectedDate,
     );
   }
 }

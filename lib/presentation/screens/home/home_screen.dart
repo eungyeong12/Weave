@@ -42,7 +42,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       _selectedDate = date;
     });
     // bottomSheet 표시
-    CategoryBottomSheet.show(context, _handleCategorySelection);
+    CategoryBottomSheet.show(
+      context,
+      _handleCategorySelection,
+      selectedDate: _selectedDate,
+    );
   }
 
   void _handleCategorySelection(String category) {
@@ -93,8 +97,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () =>
-                CategoryBottomSheet.show(context, _handleCategorySelection),
+            onTap: () => CategoryBottomSheet.show(
+              context,
+              _handleCategorySelection,
+              selectedDate: _selectedDate,
+            ),
             borderRadius: BorderRadius.circular(28),
             child: const Icon(Icons.add, color: Colors.white, size: 28),
           ),
