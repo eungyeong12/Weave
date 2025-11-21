@@ -13,8 +13,13 @@ import 'package:weave/domain/usecases/auth/sign_in_with_email_and_password.dart'
 import 'package:weave/domain/usecases/auth/sign_up_with_email_and_password.dart';
 import 'package:weave/domain/usecases/auth/sign_out.dart';
 import 'package:weave/domain/usecases/diary/save_daily_diary.dart';
+import 'package:weave/data/datasources/book/naver_book_datasource.dart';
+import 'package:weave/data/repositories/book/book_repository_impl.dart';
+import 'package:weave/domain/repositories/book/book_repository.dart';
+import 'package:weave/domain/usecases/book/search_books.dart';
 import 'package:weave/presentation/viewmodels/auth/auth_viewmodel.dart';
 import 'package:weave/presentation/viewmodels/diary/daily_diary_write_viewmodel.dart';
+import 'package:weave/presentation/viewmodels/book/book_search_viewmodel.dart';
 
 final firebaseAuthProvider = Provider((ref) => FirebaseAuth.instance);
 
@@ -74,4 +79,20 @@ final dailyDiaryWriteViewModelProvider =
     StateNotifierProvider<DailyDiaryWriteViewModel, DailyDiaryWriteState>(
       (ref) =>
           DailyDiaryWriteViewModel(ref.read(saveDailyDiaryUseCaseProvider)),
+    );
+
+// Book 관련 providers
+final naverBookDataSourceProvider = Provider((ref) => NaverBookDataSource());
+
+final bookRepositoryProvider = Provider<BookRepository>(
+  (ref) => BookRepositoryImpl(ref.read(naverBookDataSourceProvider)),
+);
+
+final searchBooksUseCaseProvider = Provider(
+  (ref) => SearchBooksUseCase(ref.read(bookRepositoryProvider)),
+);
+
+final bookSearchViewModelProvider =
+    StateNotifierProvider<BookSearchViewModel, BookSearchState>(
+      (ref) => BookSearchViewModel(ref.read(searchBooksUseCaseProvider)),
     );

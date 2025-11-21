@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:weave/presentation/screens/book/book_search_screen.dart';
 
 class CategoryBottomSheet {
   static void show(BuildContext context, Function(String) onCategorySelected) {
@@ -43,7 +44,12 @@ class CategoryBottomSheet {
                       title: '도서 기록하기',
                       onTap: () {
                         Navigator.pop(context);
-                        onCategorySelected('도서');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const BookSearchScreen(),
+                          ),
+                        );
                       },
                     ),
                     const SizedBox(height: 8),
