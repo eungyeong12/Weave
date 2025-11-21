@@ -335,6 +335,7 @@ class _DailyDiaryWriteScreenState extends State<DailyDiaryWriteScreen> {
                         hintStyle: TextStyle(color: Colors.grey.shade400),
                         filled: true,
                         fillColor: Colors.transparent,
+                        hoverColor: Colors.transparent,
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
