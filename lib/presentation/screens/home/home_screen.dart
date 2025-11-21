@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:weave/presentation/widgets/calendar/calendar_widget.dart';
 import 'package:weave/presentation/widgets/category/category_bottom_sheet.dart';
+import 'package:weave/presentation/screens/diary/daily_diary_write_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -45,13 +46,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _handleCategorySelection(String category) {
-    // 카테고리 선택 처리 로직 (나중에 구현)
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$category 카테고리가 선택되었습니다.'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    if (category == '일상') {
+      // 선택된 날짜가 없으면 오늘 날짜로 설정
+      final selectedDate = _selectedDate ?? DateTime.now();
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              DailyDiaryWriteScreen(selectedDate: selectedDate),
+        ),
+      );
+    } else {
+      // 다른 카테고리 선택 처리 (나중에 구현)
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$category 카테고리가 선택되었습니다.'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   @override

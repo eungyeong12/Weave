@@ -1,0 +1,353 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+class DailyDiaryWriteScreen extends StatefulWidget {
+  final DateTime selectedDate;
+
+  const DailyDiaryWriteScreen({super.key, required this.selectedDate});
+
+  @override
+  State<DailyDiaryWriteScreen> createState() => _DailyDiaryWriteScreenState();
+}
+
+class _DailyDiaryWriteScreenState extends State<DailyDiaryWriteScreen> {
+  final TextEditingController _diaryController = TextEditingController();
+  final FocusNode _diaryFocusNode = FocusNode();
+  final ImagePicker _picker = ImagePicker();
+  final List<XFile> _images = [];
+
+  @override
+  void dispose() {
+    _diaryController.dispose();
+    _diaryFocusNode.dispose();
+    super.dispose();
+  }
+
+  Future<void> _addImage() async {
+    // Web은 권한 확인 불필요
+    if (kIsWeb) {
+      await _pickImage();
+      return;
+    }
+
+    // 권한 확인 및 요청
+    // Permission.photos는 Android 13+에서는 READ_MEDIA_IMAGES를,
+    // Android 12 이하에서는 READ_EXTERNAL_STORAGE를 자동으로 처리합니다.
+    // iOS에서는 PHPhotoLibrary 권한을 처리합니다.
+    PermissionStatus status = await Permission.photos.status;
+
+    // 권한이 거부된 경우
+    if (status.isDenied) {
+      // 권한 요청
+      status = await Permission.photos.request();
+      if (status.isDenied) {
+        if (mounted) {
+          _showPermissionDeniedDialog();
+        }
+        return;
+      }
+    }
+
+    // 권한이 영구적으로 거부된 경우
+    if (status.isPermanentlyDenied) {
+      if (mounted) {
+        _showPermissionPermanentlyDeniedDialog();
+      }
+      return;
+    }
+
+    // 권한이 허용된 경우 이미지 선택
+    await _pickImage();
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+      if (image != null) {
+        setState(() {
+          _images.add(image);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('이미지를 선택하는 중 오류가 발생했습니다: $e'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  void _showPermissionDeniedDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('권한 필요'),
+        content: const Text('사진을 선택하려면 사진 라이브러리 접근 권한이 필요합니다.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              openAppSettings();
+            },
+            child: const Text('설정으로 이동'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPermissionPermanentlyDeniedDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('권한 필요'),
+        content: const Text(
+          '사진을 선택하려면 사진 라이브러리 접근 권한이 필요합니다.\n설정에서 권한을 허용해주세요.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              openAppSettings();
+            },
+            child: const Text('설정으로 이동'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _images.removeAt(index);
+    });
+  }
+
+  void _save() {
+    // TODO: 저장 로직 구현
+    Navigator.pop(context);
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        titleSpacing: 12,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12),
+          child: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: const Icon(Icons.chevron_left, color: Colors.black),
+          ),
+        ),
+        title: Text(
+          _formatDate(widget.selectedDate),
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: _save,
+            child: const Text(
+              '저장',
+              style: TextStyle(
+                color: Colors.green,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: GestureDetector(
+          onTap: () {
+            // 텍스트 입력칸 외부를 클릭하면 포커스 해제
+            _diaryFocusNode.unfocus();
+          },
+          behavior: HitTestBehavior.opaque,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Column(
+              children: [
+                // 사진 추가 영역
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final imageHeight = 120.0;
+                      final imageWidth = imageHeight * 2 / 3; // 2:3 비율
+                      return SizedBox(
+                        height: imageHeight,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _images.length + 1, // 사진들 + 추가 버튼
+                          itemBuilder: (context, index) {
+                            if (index == _images.length) {
+                              // 사진 추가 버튼
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: GestureDetector(
+                                  onTap: _addImage,
+                                  child: Container(
+                                    width: imageWidth,
+                                    height: imageHeight,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: Colors.grey.shade300,
+                                        width: 1,
+                                        style: BorderStyle.solid,
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.add_photo_alternate,
+                                        size: 32,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+                            // 사진 아이템
+                            final imageFile = _images[index];
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    width: imageWidth,
+                                    height: imageHeight,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade200,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: kIsWeb
+                                          ? Image.network(
+                                              imageFile.path,
+                                              width: imageWidth,
+                                              height: imageHeight,
+                                              fit: BoxFit.cover,
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
+                                                    return const Icon(
+                                                      Icons.image,
+                                                      size: 50,
+                                                      color: Colors.grey,
+                                                    );
+                                                  },
+                                            )
+                                          : Image.file(
+                                              File(imageFile.path),
+                                              width: imageWidth,
+                                              height: imageHeight,
+                                              fit: BoxFit.cover,
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
+                                                    return const Icon(
+                                                      Icons.image,
+                                                      size: 50,
+                                                      color: Colors.grey,
+                                                    );
+                                                  },
+                                            ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    top: 4,
+                                    right: 4,
+                                    child: GestureDetector(
+                                      onTap: () => _removeImage(index),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: const BoxDecoration(
+                                          color: Colors.red,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.close,
+                                          size: 16,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                // 일기 텍스트 입력 영역
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Container(
+                    constraints: const BoxConstraints(minHeight: 540),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF6F9F2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TextField(
+                      controller: _diaryController,
+                      focusNode: _diaryFocusNode,
+                      minLines: null,
+                      maxLines: null,
+                      expands: false,
+                      textAlignVertical: TextAlignVertical.top,
+                      decoration: InputDecoration(
+                        hintText: '오늘 하루를 기록해보세요',
+                        hintStyle: TextStyle(color: Colors.grey.shade400),
+                        filled: true,
+                        fillColor: Colors.transparent,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        contentPadding: const EdgeInsets.all(16),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
