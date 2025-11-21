@@ -23,7 +23,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.listen<AuthState>(authViewModelProvider, (previous, next) {
       // 1. 성공 처리: 사용자가 있고 이전에는 없었을 때
       if (next.user != null && (previous == null || previous.user == null)) {
-        Navigator.of(context).pushReplacementNamed('/home');
+        // 빌드가 완료된 후에 네비게이션 실행
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            Navigator.of(context).pushReplacementNamed('/home');
+          }
+        });
         return;
       }
 
@@ -34,43 +39,52 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           !next.isLoading &&
           next.error != null &&
           next.user == null) {
-        // 기존 SnackBar가 있으면 제거
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        // 빌드가 완료된 후에 SnackBar 표시
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
 
-        // 새로운 에러 SnackBar 표시
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error_outline, color: Colors.white, size: 20),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    next.error!,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
+          // 기존 SnackBar가 있으면 제거
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+          // 새로운 에러 SnackBar 표시
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      next.error!,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
+              backgroundColor: Colors.red.shade600,
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.all(16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              duration: const Duration(seconds: 4),
+              action: SnackBarAction(
+                label: '닫기',
+                textColor: Colors.white,
+                onPressed: () {
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                },
+              ),
             ),
-            backgroundColor: Colors.red.shade600,
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.all(16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            duration: const Duration(seconds: 4),
-            action: SnackBarAction(
-              label: '닫기',
-              textColor: Colors.white,
-              onPressed: () {
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              },
-            ),
-          ),
-        );
+          );
+        });
       }
     });
 

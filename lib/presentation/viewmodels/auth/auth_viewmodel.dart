@@ -49,6 +49,11 @@ class AuthViewModel extends StateNotifier<AuthState> {
   AuthViewModel(this._signIn, this._signUp, this._signOut)
     : super(AuthState.initial());
 
+  // 현재 로그인된 사용자를 설정하는 메서드 (앱 시작 시 사용)
+  void setCurrentUser(User user) {
+    state = state.copyWith(user: user, clearError: true);
+  }
+
   Future<void> signInWithEmailAndPassword({
     required String email,
     required String password,
