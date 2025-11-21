@@ -25,6 +25,11 @@ import 'package:weave/data/repositories/movie/movie_repository_impl.dart';
 import 'package:weave/domain/repositories/movie/movie_repository.dart';
 import 'package:weave/domain/usecases/movie/search_movies.dart';
 import 'package:weave/presentation/viewmodels/movie/movie_search_viewmodel.dart';
+import 'package:weave/data/datasources/performance/kopis_datasource.dart';
+import 'package:weave/data/repositories/performance/performance_repository_impl.dart';
+import 'package:weave/domain/repositories/performance/performance_repository.dart';
+import 'package:weave/domain/usecases/performance/search_performances.dart';
+import 'package:weave/presentation/viewmodels/performance/performance_search_viewmodel.dart';
 
 final firebaseAuthProvider = Provider((ref) => FirebaseAuth.instance);
 
@@ -116,4 +121,22 @@ final searchMoviesUseCaseProvider = Provider(
 final movieSearchViewModelProvider =
     StateNotifierProvider<MovieSearchViewModel, MovieSearchState>(
       (ref) => MovieSearchViewModel(ref.read(searchMoviesUseCaseProvider)),
+    );
+
+// Performance 관련 providers
+final kopisDataSourceProvider = Provider((ref) => KopisDataSource());
+
+final performanceRepositoryProvider = Provider<PerformanceRepository>(
+  (ref) => PerformanceRepositoryImpl(ref.read(kopisDataSourceProvider)),
+);
+
+final searchPerformancesUseCaseProvider = Provider(
+  (ref) => SearchPerformancesUseCase(ref.read(performanceRepositoryProvider)),
+);
+
+final performanceSearchViewModelProvider =
+    StateNotifierProvider<PerformanceSearchViewModel, PerformanceSearchState>(
+      (ref) => PerformanceSearchViewModel(
+        ref.read(searchPerformancesUseCaseProvider),
+      ),
     );
