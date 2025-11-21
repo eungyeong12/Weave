@@ -6,7 +6,6 @@ import 'di/injector.dart';
 import 'data/models/user/user_dto.dart';
 import 'presentation/screens/auth/login_screen.dart';
 import 'presentation/screens/home/home_screen.dart';
-import 'presentation/screens/diary/daily_diary_write_screen.dart';
 
 void main() async {
   // Flutter 바인딩 초기화

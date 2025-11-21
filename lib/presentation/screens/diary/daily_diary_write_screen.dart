@@ -1,19 +1,22 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:weave/di/injector.dart';
 
-class DailyDiaryWriteScreen extends StatefulWidget {
+class DailyDiaryWriteScreen extends ConsumerStatefulWidget {
   final DateTime selectedDate;
 
   const DailyDiaryWriteScreen({super.key, required this.selectedDate});
 
   @override
-  State<DailyDiaryWriteScreen> createState() => _DailyDiaryWriteScreenState();
+  ConsumerState<DailyDiaryWriteScreen> createState() =>
+      _DailyDiaryWriteScreenState();
 }
 
-class _DailyDiaryWriteScreenState extends State<DailyDiaryWriteScreen> {
+class _DailyDiaryWriteScreenState extends ConsumerState<DailyDiaryWriteScreen> {
   final TextEditingController _diaryController = TextEditingController();
   final FocusNode _diaryFocusNode = FocusNode();
   final ImagePicker _picker = ImagePicker();
@@ -35,8 +38,8 @@ class _DailyDiaryWriteScreenState extends State<DailyDiaryWriteScreen> {
 
     // 권한 확인 및 요청
     // Permission.photos는 Android 13+에서는 READ_MEDIA_IMAGES를,
-    // Android 12 이하에서는 READ_EXTERNAL_STORAGE를 자동으로 처리합니다.
-    // iOS에서는 PHPhotoLibrary 권한을 처리합니다.
+    // Android 12 이하에서는 READ_EXTERNAL_STORAGE를 자동으로 처리.
+    // iOS에서는 PHPhotoLibrary 권한을 처리.
     PermissionStatus status = await Permission.photos.status;
 
     // 권한이 거부된 경우
@@ -140,9 +143,66 @@ class _DailyDiaryWriteScreenState extends State<DailyDiaryWriteScreen> {
     });
   }
 
-  void _save() {
-    // TODO: 저장 로직 구현
-    Navigator.pop(context);
+  Future<void> _save() async {
+    // 내용이 비어있으면 저장하지 않음
+    if (_diaryController.text.trim().isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('일기 내용을 입력해주세요.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
+    final authState = ref.read(authViewModelProvider);
+    final user = authState.user;
+
+    if (user == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('로그인이 필요합니다.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
+    final viewModel = ref.read(dailyDiaryWriteViewModelProvider.notifier);
+    final imageFilePaths = _images.map((image) => image.path).toList();
+
+    await viewModel.saveDailyDiary(
+      userId: user.uid,
+      date: widget.selectedDate,
+      content: _diaryController.text,
+      imageFilePaths: imageFilePaths,
+    );
+
+    final state = ref.read(dailyDiaryWriteViewModelProvider);
+
+    if (!mounted) return;
+
+    if (state.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(state.error ?? '오류가 발생했습니다.'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } else {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('일기가 저장되었습니다.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   String _formatDate(DateTime date) {
@@ -174,16 +234,38 @@ class _DailyDiaryWriteScreenState extends State<DailyDiaryWriteScreen> {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: _save,
-            child: const Text(
-              '저장',
-              style: TextStyle(
-                color: Colors.green,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+          Consumer(
+            builder: (context, ref, _) {
+              final state = ref.watch(dailyDiaryWriteViewModelProvider);
+              final isContentEmpty = _diaryController.text.trim().isEmpty;
+              final isDisabled = state.isLoading || isContentEmpty;
+
+              return TextButton(
+                onPressed: isDisabled ? null : _save,
+                style: TextButton.styleFrom(
+                  splashFactory: NoSplash.splashFactory,
+                ),
+                child: state.isLoading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.green,
+                          ),
+                        ),
+                      )
+                    : Text(
+                        '저장',
+                        style: TextStyle(
+                          color: isContentEmpty ? Colors.grey : Colors.green,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              );
+            },
           ),
         ],
       ),
@@ -330,6 +412,7 @@ class _DailyDiaryWriteScreenState extends State<DailyDiaryWriteScreen> {
                       maxLines: null,
                       expands: false,
                       textAlignVertical: TextAlignVertical.top,
+                      onChanged: (_) => setState(() {}),
                       decoration: InputDecoration(
                         hintText: '오늘 하루를 기록해보세요',
                         hintStyle: TextStyle(color: Colors.grey.shade400),
