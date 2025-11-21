@@ -1,24 +1,26 @@
 import 'package:flutter/material.dart';
 
-class BookSearchBar extends StatefulWidget {
+class SearchTextField extends StatefulWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final ValueChanged<String> onSubmitted;
   final VoidCallback onClear;
+  final String hintText;
 
-  const BookSearchBar({
+  const SearchTextField({
     super.key,
     required this.controller,
     required this.focusNode,
     required this.onSubmitted,
     required this.onClear,
+    this.hintText = '검색어를 입력하세요',
   });
 
   @override
-  State<BookSearchBar> createState() => _BookSearchBarState();
+  State<SearchTextField> createState() => _SearchTextFieldState();
 }
 
-class _BookSearchBarState extends State<BookSearchBar> {
+class _SearchTextFieldState extends State<SearchTextField> {
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -31,7 +33,7 @@ class _BookSearchBarState extends State<BookSearchBar> {
           style: const TextStyle(fontSize: 14),
           textAlignVertical: TextAlignVertical.center,
           decoration: InputDecoration(
-            hintText: '도서 제목을 입력하세요',
+            hintText: widget.hintText,
             hintStyle: const TextStyle(fontSize: 14),
             prefixIcon: const Icon(
               Icons.search,

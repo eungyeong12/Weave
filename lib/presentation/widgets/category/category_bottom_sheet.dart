@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:weave/presentation/screens/book/book_search_screen.dart';
+import 'package:weave/presentation/screens/movie/movie_search_screen.dart';
 
 class CategoryBottomSheet {
   static void show(BuildContext context, Function(String) onCategorySelected) {
@@ -57,7 +58,12 @@ class CategoryBottomSheet {
                       title: '영화·드라마 기록하기',
                       onTap: () {
                         Navigator.pop(context);
-                        onCategorySelected('영화·드라마');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const MovieSearchScreen(),
+                          ),
+                        );
                       },
                     ),
                     const SizedBox(height: 8),

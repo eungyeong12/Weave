@@ -6,16 +6,16 @@ import 'package:weave/presentation/widgets/search/search_bar.dart';
 import 'package:weave/presentation/widgets/book/book_search_loading_state.dart';
 import 'package:weave/presentation/widgets/book/book_search_error_state.dart';
 import 'package:weave/presentation/widgets/book/book_search_empty_state.dart';
-import 'package:weave/presentation/widgets/book/book_search_results_list.dart';
+import 'package:weave/presentation/widgets/movie/movie_search_results_list.dart';
 
-class BookSearchScreen extends ConsumerStatefulWidget {
-  const BookSearchScreen({super.key});
+class MovieSearchScreen extends ConsumerStatefulWidget {
+  const MovieSearchScreen({super.key});
 
   @override
-  ConsumerState<BookSearchScreen> createState() => _BookSearchScreenState();
+  ConsumerState<MovieSearchScreen> createState() => _MovieSearchScreenState();
 }
 
-class _BookSearchScreenState extends ConsumerState<BookSearchScreen> {
+class _MovieSearchScreenState extends ConsumerState<MovieSearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
 
@@ -27,14 +27,11 @@ class _BookSearchScreenState extends ConsumerState<BookSearchScreen> {
   }
 
   void _onSearchSubmitted(String value) {
-    print('🔍 _onSearchSubmitted 호출됨: $value');
     if (value.trim().isNotEmpty) {
-      print('📚 searchBooks 호출 시작');
-      ref.read(bookSearchViewModelProvider.notifier).searchBooks(value);
+      ref.read(movieSearchViewModelProvider.notifier).searchMovies(value);
       _searchFocusNode.unfocus();
     } else {
-      print('🗑️ clearSearch 호출');
-      ref.read(bookSearchViewModelProvider.notifier).clearSearch();
+      ref.read(movieSearchViewModelProvider.notifier).clearSearch();
     }
   }
 
@@ -45,7 +42,6 @@ class _BookSearchScreenState extends ConsumerState<BookSearchScreen> {
       final encodedUrl = Uri.encodeComponent(originalUrl);
       return 'https://us-central1-$projectId.cloudfunctions.net/proxyImage?url=$encodedUrl';
     } catch (e) {
-      // Firebase 초기화 실패 시 원본 URL 반환
       return originalUrl;
     }
   }
@@ -66,7 +62,7 @@ class _BookSearchScreenState extends ConsumerState<BookSearchScreen> {
           ),
         ),
         title: const Text(
-          '도서 검색',
+          '영화·드라마 검색',
           style: TextStyle(
             color: Colors.black,
             fontSize: 18,
@@ -76,7 +72,6 @@ class _BookSearchScreenState extends ConsumerState<BookSearchScreen> {
       ),
       body: GestureDetector(
         onTap: () {
-          // 검색바 외부를 클릭하면 포커스 해제
           _searchFocusNode.unfocus();
         },
         behavior: HitTestBehavior.opaque,
@@ -92,7 +87,7 @@ class _BookSearchScreenState extends ConsumerState<BookSearchScreen> {
                   _searchController.clear();
                 });
               },
-              hintText: '도서 제목을 입력하세요',
+              hintText: '영화·드라마 제목을 입력하세요',
             ),
             // 검색 결과 영역
             Expanded(
@@ -102,7 +97,7 @@ class _BookSearchScreenState extends ConsumerState<BookSearchScreen> {
                 ),
                 child: Consumer(
                   builder: (context, ref, _) {
-                    final state = ref.watch(bookSearchViewModelProvider);
+                    final state = ref.watch(movieSearchViewModelProvider);
 
                     if (state.isLoading) {
                       return const BookSearchLoadingState();
@@ -114,16 +109,16 @@ class _BookSearchScreenState extends ConsumerState<BookSearchScreen> {
 
                     if (_searchController.text.trim().isEmpty) {
                       return const BookSearchEmptyState(
-                        message: '도서 제목을 검색해보세요',
+                        message: '영화·드라마 제목을 검색해보세요',
                       );
                     }
 
-                    if (state.books.isEmpty) {
+                    if (state.movies.isEmpty) {
                       return const BookSearchEmptyState(message: '검색 결과가 없습니다');
                     }
 
-                    return BookSearchResultsList(
-                      books: state.books,
+                    return MovieSearchResultsList(
+                      movies: state.movies,
                       getProxiedImageUrl: _getProxiedImageUrl,
                     );
                   },

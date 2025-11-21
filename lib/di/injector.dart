@@ -20,6 +20,11 @@ import 'package:weave/domain/usecases/book/search_books.dart';
 import 'package:weave/presentation/viewmodels/auth/auth_viewmodel.dart';
 import 'package:weave/presentation/viewmodels/diary/daily_diary_write_viewmodel.dart';
 import 'package:weave/presentation/viewmodels/book/book_search_viewmodel.dart';
+import 'package:weave/data/datasources/movie/tmdb_movie_datasource.dart';
+import 'package:weave/data/repositories/movie/movie_repository_impl.dart';
+import 'package:weave/domain/repositories/movie/movie_repository.dart';
+import 'package:weave/domain/usecases/movie/search_movies.dart';
+import 'package:weave/presentation/viewmodels/movie/movie_search_viewmodel.dart';
 
 final firebaseAuthProvider = Provider((ref) => FirebaseAuth.instance);
 
@@ -95,4 +100,20 @@ final searchBooksUseCaseProvider = Provider(
 final bookSearchViewModelProvider =
     StateNotifierProvider<BookSearchViewModel, BookSearchState>(
       (ref) => BookSearchViewModel(ref.read(searchBooksUseCaseProvider)),
+    );
+
+// Movie 관련 providers
+final tmdbMovieDataSourceProvider = Provider((ref) => TmdbMovieDataSource());
+
+final movieRepositoryProvider = Provider<MovieRepository>(
+  (ref) => MovieRepositoryImpl(ref.read(tmdbMovieDataSourceProvider)),
+);
+
+final searchMoviesUseCaseProvider = Provider(
+  (ref) => SearchMoviesUseCase(ref.read(movieRepositoryProvider)),
+);
+
+final movieSearchViewModelProvider =
+    StateNotifierProvider<MovieSearchViewModel, MovieSearchState>(
+      (ref) => MovieSearchViewModel(ref.read(searchMoviesUseCaseProvider)),
     );

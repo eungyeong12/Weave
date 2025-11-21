@@ -12,6 +12,7 @@ initializeApp();
 // Secrets 정의
 const naverClientId = defineSecret("NAVER_CLIENT_ID");
 const naverClientSecret = defineSecret("NAVER_CLIENT_SECRET");
+const tmdbApiKey = defineSecret("TMDB_API_KEY");
 
 /**
  * 네이버 도서 검색 API를 호출하는 HTTP Cloud Function
@@ -188,6 +189,124 @@ exports.proxyImage = onRequest(
       console.error("이미지 프록시 오류:", error);
       res.status(500).json({
         error: `이미지 로딩 실패: ${error.message}`,
+      });
+    }
+  }
+);
+
+/**
+ * TMDb 영화 검색 API를 호출하는 HTTP Cloud Function
+ */
+exports.searchMoviesHttp = onRequest(
+  {
+    cors: true,
+    maxInstances: 10,
+    secrets: [tmdbApiKey],
+  },
+  async (req, res) => {
+    try {
+      // CORS 헤더 설정
+      res.set("Access-Control-Allow-Origin", "*");
+      res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+      res.set("Access-Control-Allow-Headers", "Content-Type");
+
+      // OPTIONS 요청 처리
+      if (req.method === "OPTIONS") {
+        res.status(204).send("");
+        return;
+      }
+
+      // 요청 데이터 파싱
+      let query,
+        page = 1;
+
+      if (req.method === "GET") {
+        query = req.query.query;
+        page = parseInt(req.query.page) || 1;
+      } else if (req.method === "POST") {
+        const body = req.body;
+        query = body.query;
+        page = body.page || 1;
+      }
+
+      if (!query || query.trim() === "") {
+        res.status(400).json({
+          success: false,
+          error: "검색어를 입력해주세요.",
+        });
+        return;
+      }
+
+      // Secrets에서 TMDb API 키 가져오기
+      const apiKey = tmdbApiKey.value();
+
+      if (!apiKey) {
+        res.status(500).json({
+          success: false,
+          error: "TMDb API 키가 설정되지 않았습니다.",
+        });
+        return;
+      }
+
+      // TMDb 검색 API 호출 (영화와 TV 모두 검색)
+      const response = await axios.get(
+        "https://api.themoviedb.org/3/search/multi",
+        {
+          params: {
+            api_key: apiKey,
+            query: query,
+            page: page,
+            language: "ko-KR",
+          },
+        }
+      );
+
+      // 숫자를 문자열로 변환하여 Int64 문제 회피
+      const convertNumbersToString = (obj) => {
+        if (obj === null || obj === undefined) {
+          return obj;
+        }
+        if (Array.isArray(obj)) {
+          return obj.map(convertNumbersToString);
+        }
+        if (typeof obj === "object") {
+          const result = {};
+          for (const key in obj) {
+            if (obj.hasOwnProperty(key)) {
+              result[key] = convertNumbersToString(obj[key]);
+            }
+          }
+          return result;
+        }
+        if (typeof obj === "number") {
+          return obj.toString();
+        }
+        return obj;
+      };
+
+      const jsonData = JSON.parse(JSON.stringify(response.data));
+      const convertedData = convertNumbersToString(jsonData);
+
+      // HTTP 응답으로 반환
+      res.status(200).json({
+        success: true,
+        data: convertedData,
+      });
+    } catch (error) {
+      console.error("영화 검색 오류:", error);
+
+      if (error.response) {
+        // TMDb API 오류
+        res.status(500).json({
+          success: false,
+          error: `영화 검색 실패: ${error.response.status} - ${error.response.statusText}`,
+        });
+        return;
+      }
+
+      res.status(500).json({
+        success: false,
+        error: `영화 검색 중 오류가 발생했습니다: ${error.message}`,
       });
     }
   }
