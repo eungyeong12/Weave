@@ -12,14 +12,42 @@ class BookDto extends Book {
   });
 
   factory BookDto.fromJson(Map<String, dynamic> json) {
+    // 이미지 URL에서 HTML 태그 제거 및 정리
+    String? imageUrl;
+    if (json['image'] != null) {
+      String image = json['image'].toString();
+      // HTML 태그 제거
+      image = image.replaceAll(RegExp(r'<[^>]*>'), '').trim();
+      // 빈 문자열이 아니면 사용
+      if (image.isNotEmpty) {
+        imageUrl = image;
+      }
+    }
+
+    // 디버깅: 이미지 URL 출력
+    if (imageUrl != null) {
+      print('🖼️ 이미지 URL: $imageUrl');
+    } else {
+      print('⚠️ 이미지 URL 없음. json[image]: ${json['image']}');
+    }
+
     return BookDto(
-      title: json['title'] ?? '',
-      author: json['author'] ?? '',
-      imageUrl: json['image'],
-      description: json['description'],
-      isbn: json['isbn'],
-      publisher: json['publisher'],
-      pubDate: json['pubdate'],
+      title: (json['title'] ?? '').toString().replaceAll(
+        RegExp(r'<[^>]*>'),
+        '',
+      ),
+      author: (json['author'] ?? '').toString().replaceAll(
+        RegExp(r'<[^>]*>'),
+        '',
+      ),
+      imageUrl: imageUrl,
+      description: json['description']?.toString().replaceAll(
+        RegExp(r'<[^>]*>'),
+        '',
+      ),
+      isbn: json['isbn']?.toString(),
+      publisher: json['publisher']?.toString(),
+      pubDate: json['pubdate']?.toString(),
     );
   }
 }

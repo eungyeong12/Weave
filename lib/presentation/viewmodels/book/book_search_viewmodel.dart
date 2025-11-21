@@ -36,17 +36,23 @@ class BookSearchViewModel extends StateNotifier<BookSearchState> {
     : super(const BookSearchState());
 
   Future<void> searchBooks(String query) async {
+    print('📖 BookSearchViewModel.searchBooks 호출됨: $query');
+
     if (query.trim().isEmpty) {
       state = state.copyWith(books: [], clearError: true);
       return;
     }
 
+    print('⏳ 로딩 시작');
     state = state.copyWith(isLoading: true, clearError: true);
 
     try {
+      print('🔧 UseCase 호출 시작');
       final Either<Failure, List<Book>> result = await _searchBooksUseCase(
         query: query,
       );
+
+      print('✅ UseCase 응답 받음');
 
       result.fold(
         (failure) {

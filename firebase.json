@@ -1,1 +1,37 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"weave-9b2c7","appId":"1:925377441939:android:f7862e7fa305f7e1155d66","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"weave-9b2c7","configurations":{"android":"1:925377441939:android:f7862e7fa305f7e1155d66","ios":"1:925377441939:ios:2adf567069800193155d66","web":"1:925377441939:web:8d1126539c4dbe58155d66"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "weave-9b2c7",
+          "appId": "1:925377441939:android:f7862e7fa305f7e1155d66",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "weave-9b2c7",
+          "configurations": {
+            "android": "1:925377441939:android:f7862e7fa305f7e1155d66",
+            "ios": "1:925377441939:ios:2adf567069800193155d66",
+            "web": "1:925377441939:web:8d1126539c4dbe58155d66"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs20"
+  }
+}

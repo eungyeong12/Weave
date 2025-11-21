@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:weave/di/injector.dart';
 import 'package:weave/domain/entities/book/book.dart';
 
@@ -22,11 +23,26 @@ class _BookSearchScreenState extends ConsumerState<BookSearchScreen> {
   }
 
   void _onSearchSubmitted(String value) {
+    print('🔍 _onSearchSubmitted 호출됨: $value');
     if (value.trim().isNotEmpty) {
+      print('📚 searchBooks 호출 시작');
       ref.read(bookSearchViewModelProvider.notifier).searchBooks(value);
       _searchFocusNode.unfocus();
     } else {
+      print('🗑️ clearSearch 호출');
       ref.read(bookSearchViewModelProvider.notifier).clearSearch();
+    }
+  }
+
+  // 이미지 프록시 URL 생성
+  String _getProxiedImageUrl(String originalUrl) {
+    try {
+      final projectId = Firebase.app().options.projectId;
+      final encodedUrl = Uri.encodeComponent(originalUrl);
+      return 'https://us-central1-$projectId.cloudfunctions.net/proxyImage?url=$encodedUrl';
+    } catch (e) {
+      // Firebase 초기화 실패 시 원본 URL 반환
+      return originalUrl;
     }
   }
 
@@ -64,7 +80,7 @@ class _BookSearchScreenState extends ConsumerState<BookSearchScreen> {
           children: [
             // 검색 바
             Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
               child: SizedBox(
                 height: 36,
                 child: TextField(
@@ -115,32 +131,32 @@ class _BookSearchScreenState extends ConsumerState<BookSearchScreen> {
             ),
             // 검색 결과 영역
             Expanded(
-              child: Consumer(
-                builder: (context, ref, _) {
-                  final state = ref.watch(bookSearchViewModelProvider);
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).padding.bottom,
+                ),
+                child: Consumer(
+                  builder: (context, ref, _) {
+                    final state = ref.watch(bookSearchViewModelProvider);
 
-                  if (state.isLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
+                    if (state.isLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-                  if (state.error != null) {
-                    return Center(
-                      child: Text(
-                        state.error!,
-                        style: TextStyle(
-                          color: Colors.red.shade400,
-                          fontSize: 16,
+                    if (state.error != null) {
+                      return Center(
+                        child: Text(
+                          state.error!,
+                          style: TextStyle(
+                            color: Colors.red.shade400,
+                            fontSize: 16,
+                          ),
                         ),
-                      ),
-                    );
-                  }
+                      );
+                    }
 
-                  if (_searchController.text.trim().isEmpty) {
-                    return Padding(
-                      padding: EdgeInsets.only(
-                        bottom: MediaQuery.of(context).padding.bottom,
-                      ),
-                      child: Center(
+                    if (_searchController.text.trim().isEmpty) {
+                      return Center(
                         child: Text(
                           '도서 제목을 검색해보세요',
                           style: TextStyle(
@@ -148,16 +164,11 @@ class _BookSearchScreenState extends ConsumerState<BookSearchScreen> {
                             fontSize: 16,
                           ),
                         ),
-                      ),
-                    );
-                  }
+                      );
+                    }
 
-                  if (state.books.isEmpty) {
-                    return Padding(
-                      padding: EdgeInsets.only(
-                        bottom: MediaQuery.of(context).padding.bottom,
-                      ),
-                      child: Center(
+                    if (state.books.isEmpty) {
+                      return Center(
                         child: Text(
                           '검색 결과가 없습니다',
                           style: TextStyle(
@@ -165,21 +176,21 @@ class _BookSearchScreenState extends ConsumerState<BookSearchScreen> {
                             fontSize: 16,
                           ),
                         ),
-                      ),
-                    );
-                  }
+                      );
+                    }
 
-                  return ListView.builder(
-                    padding: EdgeInsets.only(
-                      bottom: MediaQuery.of(context).padding.bottom,
-                    ),
-                    itemCount: state.books.length,
-                    itemBuilder: (context, index) {
-                      final book = state.books[index];
-                      return _BookItem(book: book);
-                    },
-                  );
-                },
+                    return ListView.builder(
+                      itemCount: state.books.length,
+                      itemBuilder: (context, index) {
+                        final book = state.books[index];
+                        return _BookItem(
+                          book: book,
+                          getProxiedImageUrl: _getProxiedImageUrl,
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
             ),
           ],
@@ -191,8 +202,9 @@ class _BookSearchScreenState extends ConsumerState<BookSearchScreen> {
 
 class _BookItem extends StatelessWidget {
   final Book book;
+  final String Function(String) getProxiedImageUrl;
 
-  const _BookItem({required this.book});
+  const _BookItem({required this.book, required this.getProxiedImageUrl});
 
   @override
   Widget build(BuildContext context) {
@@ -202,15 +214,34 @@ class _BookItem extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 책 표지 이미지
-          if (book.imageUrl != null)
+          if (book.imageUrl != null && book.imageUrl!.isNotEmpty)
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: Image.network(
-                book.imageUrl!,
+                getProxiedImageUrl(book.imageUrl!),
                 width: 60,
                 height: 80,
                 fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    width: 60,
+                    height: 80,
+                    color: Colors.grey.shade200,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                            : null,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  );
+                },
                 errorBuilder: (context, error, stackTrace) {
+                  print('❌ 이미지 로딩 실패: ${book.imageUrl}');
+                  print('오류: $error');
                   return Container(
                     width: 60,
                     height: 80,
@@ -239,7 +270,7 @@ class _BookItem extends StatelessWidget {
                 Text(
                   book.title,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Colors.black87,
                   ),
@@ -249,13 +280,13 @@ class _BookItem extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   book.author,
-                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
                 if (book.publisher != null) ...[
                   const SizedBox(height: 2),
                   Text(
                     book.publisher!,
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
                   ),
                 ],
               ],
