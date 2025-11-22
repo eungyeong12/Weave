@@ -24,4 +24,10 @@ abstract class DiaryRepository {
     int? year,
     int? month,
   });
+
+  Future<Either<Failure, void>> deleteDailyDiary({
+    required String diaryId,
+    required String userId,
+    required List<String> imageUrls,
+  });
 }

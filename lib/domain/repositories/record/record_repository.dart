@@ -31,4 +31,9 @@ abstract class RecordRepository {
     int? year,
     int? month,
   });
+
+  Future<Either<Failure, void>> deleteRecord({
+    required String recordId,
+    required String userId,
+  });
 }

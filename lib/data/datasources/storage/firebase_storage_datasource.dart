@@ -69,4 +69,37 @@ class FirebaseStorageDataSource {
 
     return imageUrls;
   }
+
+  Future<void> deleteImage(String imageUrl) async {
+    try {
+      // Firebase Storage URL에서 파일 경로 추출
+      final uri = Uri.parse(imageUrl);
+      final path = uri.path;
+
+      // URL에서 경로 추출: /v0/b/{bucket}/o/{path} 형식
+      final pathSegments = path.split('/');
+      if (pathSegments.length >= 4 &&
+          pathSegments[1] == 'v0' &&
+          pathSegments[2] == 'b') {
+        // /v0/b/{bucket}/o/{encodedPath} 형식
+        final encodedPath = pathSegments[4];
+        final decodedPath = Uri.decodeComponent(encodedPath);
+        final ref = _storage.ref(decodedPath);
+        await ref.delete();
+      } else {
+        // 직접 경로 형식인 경우
+        final ref = _storage.refFromURL(imageUrl);
+        await ref.delete();
+      }
+    } catch (e) {
+      // 이미지 삭제 실패해도 예외를 던지지 않음 (이미 삭제되었을 수 있음)
+      print('이미지 삭제 실패 (무시됨): $e');
+    }
+  }
+
+  Future<void> deleteImages(List<String> imageUrls) async {
+    for (final imageUrl in imageUrls) {
+      await deleteImage(imageUrl);
+    }
+  }
 }

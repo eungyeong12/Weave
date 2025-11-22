@@ -25,9 +25,13 @@ class RecordWriteState {
 class RecordWriteViewModel extends StateNotifier<RecordWriteState> {
   final SaveRecordUseCase _saveRecordUseCase;
   final UpdateRecordUseCase _updateRecordUseCase;
+  final DeleteRecordUseCase _deleteRecordUseCase;
 
-  RecordWriteViewModel(this._saveRecordUseCase, this._updateRecordUseCase)
-    : super(const RecordWriteState());
+  RecordWriteViewModel(
+    this._saveRecordUseCase,
+    this._updateRecordUseCase,
+    this._deleteRecordUseCase,
+  ) : super(const RecordWriteState());
 
   Future<void> saveRecord({
     required String userId,
@@ -107,6 +111,34 @@ class RecordWriteViewModel extends StateNotifier<RecordWriteState> {
       state = state.copyWith(
         isLoading: false,
         error: '기록 업데이트 중 예상치 못한 오류가 발생했습니다.',
+      );
+    }
+  }
+
+  Future<void> deleteRecord({
+    required String recordId,
+    required String userId,
+  }) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+
+    try {
+      final Either<Failure, void> result = await _deleteRecordUseCase(
+        recordId: recordId,
+        userId: userId,
+      );
+
+      result.fold(
+        (failure) {
+          state = state.copyWith(isLoading: false, error: failure.message);
+        },
+        (_) {
+          state = state.copyWith(isLoading: false, clearError: true);
+        },
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: '기록 삭제 중 예상치 못한 오류가 발생했습니다.',
       );
     }
   }

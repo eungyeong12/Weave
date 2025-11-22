@@ -111,4 +111,28 @@ class DiaryRepositoryImpl implements DiaryRepository {
       return Left(Failure('일기 조회 중 오류가 발생했습니다: ${e.toString()}'));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> deleteDailyDiary({
+    required String diaryId,
+    required String userId,
+    required List<String> imageUrls,
+  }) async {
+    try {
+      // 1. Storage에서 이미지 삭제
+      if (imageUrls.isNotEmpty) {
+        await _storageDatasource.deleteImages(imageUrls);
+      }
+
+      // 2. Firestore에서 일기 문서 삭제
+      await _firestoreDatasource.deleteDailyDiary(
+        diaryId: diaryId,
+        userId: userId,
+      );
+
+      return const Right(null);
+    } catch (e) {
+      return Left(Failure('일기 삭제 중 오류가 발생했습니다: ${e.toString()}'));
+    }
+  }
 }

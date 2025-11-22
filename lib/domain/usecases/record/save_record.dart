@@ -60,3 +60,16 @@ class UpdateRecordUseCase {
     );
   }
 }
+
+class DeleteRecordUseCase {
+  final RecordRepository _repository;
+
+  DeleteRecordUseCase(this._repository);
+
+  Future<Either<Failure, void>> call({
+    required String recordId,
+    required String userId,
+  }) async {
+    return await _repository.deleteRecord(recordId: recordId, userId: userId);
+  }
+}

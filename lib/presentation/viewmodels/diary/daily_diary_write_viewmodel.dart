@@ -25,10 +25,12 @@ class DailyDiaryWriteState {
 class DailyDiaryWriteViewModel extends StateNotifier<DailyDiaryWriteState> {
   final SaveDailyDiaryUseCase _saveDailyDiaryUseCase;
   final UpdateDailyDiaryUseCase _updateDailyDiaryUseCase;
+  final DeleteDailyDiaryUseCase _deleteDailyDiaryUseCase;
 
   DailyDiaryWriteViewModel(
     this._saveDailyDiaryUseCase,
     this._updateDailyDiaryUseCase,
+    this._deleteDailyDiaryUseCase,
   ) : super(const DailyDiaryWriteState());
 
   Future<void> saveDailyDiary({
@@ -95,6 +97,36 @@ class DailyDiaryWriteViewModel extends StateNotifier<DailyDiaryWriteState> {
       state = state.copyWith(
         isLoading: false,
         error: '일기 업데이트 중 예상치 못한 오류가 발생했습니다.',
+      );
+    }
+  }
+
+  Future<void> deleteDailyDiary({
+    required String diaryId,
+    required String userId,
+    required List<String> imageUrls,
+  }) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+
+    try {
+      final Either<Failure, void> result = await _deleteDailyDiaryUseCase(
+        diaryId: diaryId,
+        userId: userId,
+        imageUrls: imageUrls,
+      );
+
+      result.fold(
+        (failure) {
+          state = state.copyWith(isLoading: false, error: failure.message);
+        },
+        (_) {
+          state = state.copyWith(isLoading: false, clearError: true);
+        },
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: '일기 삭제 중 예상치 못한 오류가 발생했습니다.',
       );
     }
   }

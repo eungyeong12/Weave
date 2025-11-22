@@ -84,4 +84,20 @@ class RecordRepositoryImpl implements RecordRepository {
       return Left(Failure('기록 조회 중 오류가 발생했습니다: ${e.toString()}'));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> deleteRecord({
+    required String recordId,
+    required String userId,
+  }) async {
+    try {
+      await _firestoreDatasource.deleteRecord(
+        recordId: recordId,
+        userId: userId,
+      );
+      return const Right(null);
+    } catch (e) {
+      return Left(Failure('기록 삭제 중 오류가 발생했습니다: ${e.toString()}'));
+    }
+  }
 }

@@ -46,3 +46,21 @@ class UpdateDailyDiaryUseCase {
     );
   }
 }
+
+class DeleteDailyDiaryUseCase {
+  final DiaryRepository repository;
+
+  DeleteDailyDiaryUseCase(this.repository);
+
+  Future<Either<Failure, void>> call({
+    required String diaryId,
+    required String userId,
+    required List<String> imageUrls,
+  }) async {
+    return await repository.deleteDailyDiary(
+      diaryId: diaryId,
+      userId: userId,
+      imageUrls: imageUrls,
+    );
+  }
+}

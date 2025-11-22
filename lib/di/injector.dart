@@ -96,11 +96,16 @@ final updateDailyDiaryUseCaseProvider = Provider(
   (ref) => UpdateDailyDiaryUseCase(ref.read(diaryRepositoryProvider)),
 );
 
+final deleteDailyDiaryUseCaseProvider = Provider(
+  (ref) => DeleteDailyDiaryUseCase(ref.read(diaryRepositoryProvider)),
+);
+
 final dailyDiaryWriteViewModelProvider =
     StateNotifierProvider<DailyDiaryWriteViewModel, DailyDiaryWriteState>(
       (ref) => DailyDiaryWriteViewModel(
         ref.read(saveDailyDiaryUseCaseProvider),
         ref.read(updateDailyDiaryUseCaseProvider),
+        ref.read(deleteDailyDiaryUseCaseProvider),
       ),
     );
 
@@ -167,11 +172,16 @@ final updateRecordUseCaseProvider = Provider(
   (ref) => UpdateRecordUseCase(ref.read(recordRepositoryProvider)),
 );
 
+final deleteRecordUseCaseProvider = Provider(
+  (ref) => DeleteRecordUseCase(ref.read(recordRepositoryProvider)),
+);
+
 final recordWriteViewModelProvider =
     StateNotifierProvider<RecordWriteViewModel, RecordWriteState>(
       (ref) => RecordWriteViewModel(
         ref.read(saveRecordUseCaseProvider),
         ref.read(updateRecordUseCaseProvider),
+        ref.read(deleteRecordUseCaseProvider),
       ),
     );
 

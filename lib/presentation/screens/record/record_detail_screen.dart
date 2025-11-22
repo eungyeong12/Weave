@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:weave/domain/entities/record/record.dart';
 import 'package:weave/presentation/screens/record/record_write_screen.dart';
+import 'package:weave/presentation/screens/home/home_screen.dart';
+import 'package:weave/di/injector.dart';
 
-class RecordDetailScreen extends StatelessWidget {
+class RecordDetailScreen extends ConsumerStatefulWidget {
   final Record record;
   final String Function(String) getProxiedImageUrl;
 
@@ -11,6 +14,14 @@ class RecordDetailScreen extends StatelessWidget {
     required this.record,
     required this.getProxiedImageUrl,
   });
+
+  @override
+  ConsumerState<RecordDetailScreen> createState() => _RecordDetailScreenState();
+}
+
+class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
+  Record get record => widget.record;
+  String Function(String) get getProxiedImageUrl => widget.getProxiedImageUrl;
 
   String _formatDate(DateTime date) {
     final year = date.year;
@@ -183,7 +194,7 @@ class RecordDetailScreen extends StatelessWidget {
                     ),
                   );
                 } else if (value == 'delete') {
-                  // TODO: 삭제 기능 구현
+                  _showDeleteConfirmationDialog(context);
                 }
               },
               itemBuilder: (BuildContext context) => [
@@ -322,6 +333,112 @@ class RecordDetailScreen extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+          content: const Text(
+            '정말 삭제하시겠습니까?',
+            style: TextStyle(fontSize: 16),
+            textAlign: TextAlign.center,
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            SizedBox(
+              width: 100,
+              child: TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: const Text('취소'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            SizedBox(
+              width: 100,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  _deleteRecord();
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.green,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: const Text('삭제'),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteRecord() async {
+    if (record.id == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('삭제할 기록을 찾을 수 없습니다.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
+    final authState = ref.read(authViewModelProvider);
+    final user = authState.user;
+
+    if (user == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('로그인이 필요합니다.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
+    final viewModel = ref.read(recordWriteViewModelProvider.notifier);
+
+    await viewModel.deleteRecord(recordId: record.id!, userId: user.uid);
+
+    final state = ref.read(recordWriteViewModelProvider);
+
+    if (!mounted) return;
+
+    if (state.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(state.error!),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    // 삭제 성공 시 홈 화면으로 이동
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
+      (route) => false,
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('기록이 삭제되었습니다.'),
+        duration: Duration(seconds: 2),
       ),
     );
   }

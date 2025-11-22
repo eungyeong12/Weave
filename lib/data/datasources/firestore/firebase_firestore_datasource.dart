@@ -88,6 +88,22 @@ class FirebaseFirestoreDatasource {
     }
   }
 
+  Future<void> deleteDailyDiary({
+    required String diaryId,
+    required String userId,
+  }) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('diaries')
+          .doc(diaryId)
+          .delete();
+    } catch (e) {
+      throw Exception('일기 삭제 실패: $e');
+    }
+  }
+
   Future<RecordDto> saveRecord({
     required String userId,
     required String type,
@@ -182,6 +198,22 @@ class FirebaseFirestoreDatasource {
       return RecordDto.fromFirestore(data, doc.id);
     } catch (e) {
       throw Exception('기록 업데이트 실패: $e');
+    }
+  }
+
+  Future<void> deleteRecord({
+    required String recordId,
+    required String userId,
+  }) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('records')
+          .doc(recordId)
+          .delete();
+    } catch (e) {
+      throw Exception('기록 삭제 실패: $e');
     }
   }
 
