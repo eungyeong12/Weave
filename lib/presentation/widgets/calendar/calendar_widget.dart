@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:weave/domain/entities/record/record.dart';
 import 'package:weave/domain/entities/diary/diary.dart';
 import 'package:weave/presentation/widgets/gallery/month_picker_bottom_sheet.dart';
+import 'package:weave/presentation/screens/settings/settings_screen.dart';
 
 class CalendarWidget extends StatelessWidget {
   final DateTime currentMonth;
@@ -134,7 +135,6 @@ class CalendarWidget extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Column(
             children: [
-              const SizedBox(height: 16),
               // 캘린더 헤더 (월/년도 및 네비게이션)
               Row(
                 children: [
@@ -187,9 +187,24 @@ class CalendarWidget extends StatelessWidget {
                     },
                     child: const Icon(Icons.chevron_right),
                   ),
+                  const Spacer(),
+                  // 설정 아이콘
+                  IconButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SettingsScreen(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.settings, color: Colors.grey),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
               // 요일 헤더
               Row(
                 children: ['일', '월', '화', '수', '목', '금', '토']

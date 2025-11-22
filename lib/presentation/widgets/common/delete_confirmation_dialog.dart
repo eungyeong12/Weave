@@ -2,14 +2,34 @@ import 'package:flutter/material.dart';
 
 class DeleteConfirmationDialog extends StatelessWidget {
   final VoidCallback onConfirm;
+  final String message;
+  final String confirmText;
+  final Color confirmColor;
 
-  const DeleteConfirmationDialog({super.key, required this.onConfirm});
+  const DeleteConfirmationDialog({
+    super.key,
+    required this.onConfirm,
+    this.message = '정말 삭제하시겠습니까?',
+    this.confirmText = '삭제',
+    this.confirmColor = Colors.green,
+  });
 
-  static Future<void> show(BuildContext context, VoidCallback onConfirm) {
+  static Future<void> show(
+    BuildContext context,
+    VoidCallback onConfirm, {
+    String message = '정말 삭제하시겠습니까?',
+    String confirmText = '삭제',
+    Color confirmColor = Colors.green,
+  }) {
     return showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
-        return DeleteConfirmationDialog(onConfirm: onConfirm);
+        return DeleteConfirmationDialog(
+          onConfirm: onConfirm,
+          message: message,
+          confirmText: confirmText,
+          confirmColor: confirmColor,
+        );
       },
     );
   }
@@ -18,9 +38,9 @@ class DeleteConfirmationDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return AlertDialog(
       contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-      content: const Text(
-        '정말 삭제하시겠습니까?',
-        style: TextStyle(fontSize: 16),
+      content: Text(
+        message,
+        style: const TextStyle(fontSize: 16),
         textAlign: TextAlign.center,
       ),
       actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -46,10 +66,10 @@ class DeleteConfirmationDialog extends StatelessWidget {
               onConfirm();
             },
             style: TextButton.styleFrom(
-              foregroundColor: Colors.green,
+              foregroundColor: confirmColor,
               padding: const EdgeInsets.symmetric(vertical: 12),
             ),
-            child: const Text('삭제'),
+            child: Text(confirmText),
           ),
         ),
       ],

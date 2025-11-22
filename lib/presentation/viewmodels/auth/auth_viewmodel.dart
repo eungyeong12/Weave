@@ -4,6 +4,7 @@ import 'package:weave/domain/entities/user/user.dart';
 import 'package:weave/domain/usecases/auth/sign_in_with_email_and_password.dart';
 import 'package:weave/domain/usecases/auth/sign_up_with_email_and_password.dart';
 import 'package:weave/domain/usecases/auth/sign_out.dart';
+import 'package:weave/domain/usecases/auth/delete_user.dart';
 import 'package:dartz/dartz.dart';
 
 // ui가 어떻게 보여야 하는지에 대한 모든 정보를 담고 있는 불변 데이터 클래스
@@ -42,11 +43,12 @@ class AuthViewModel extends StateNotifier<AuthState> {
   final SignInWithEmailAndPasswordUseCase _signIn;
   final SignUpWithEmailAndPasswordUseCase _signUp;
   final SignOutUseCase _signOut;
+  final DeleteUserUseCase _deleteUser;
 
   // 생성자를 호출하여 부모(SstateNotifier)에게
   // 관리할 상태의 초기값은 AuthState.initial()이라고 알려줌
   // 'this._signIn', 'this._signUp', 'this._signOut': UseCase를 외부에서 주입받음
-  AuthViewModel(this._signIn, this._signUp, this._signOut)
+  AuthViewModel(this._signIn, this._signUp, this._signOut, this._deleteUser)
     : super(AuthState.initial());
 
   // 현재 로그인된 사용자를 설정하는 메서드 (앱 시작 시 사용)
@@ -149,6 +151,31 @@ class AuthViewModel extends StateNotifier<AuthState> {
       state = state.copyWith(
         isLoading: false,
         error: '로그아웃 중 예상치 못한 오류가 발생했습니다.',
+      );
+    }
+  }
+
+  Future<void> deleteUser({required String userId}) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+
+    try {
+      final Either<Failure, void> result = await _deleteUser(userId: userId);
+      result.fold(
+        (failure) {
+          state = state.copyWith(isLoading: false, error: failure.message);
+        },
+        (_) {
+          state = state.copyWith(
+            isLoading: false,
+            clearUser: true,
+            clearError: true,
+          );
+        },
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: '회원 탈퇴 중 예상치 못한 오류가 발생했습니다.',
       );
     }
   }

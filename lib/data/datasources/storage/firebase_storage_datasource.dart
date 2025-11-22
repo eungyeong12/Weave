@@ -102,4 +102,23 @@ class FirebaseStorageDataSource {
       await deleteImage(imageUrl);
     }
   }
+
+  Future<void> deleteUserImages({required String userId}) async {
+    try {
+      // 사용자의 모든 이미지 폴더 삭제
+      final diariesRef = _storage.ref().child('diaries/$userId');
+      final listResult = await diariesRef.listAll();
+
+      // 모든 하위 폴더 삭제
+      for (final prefix in listResult.prefixes) {
+        final files = await prefix.listAll();
+        for (final item in files.items) {
+          await item.delete();
+        }
+      }
+    } catch (e) {
+      // 이미지 삭제 실패해도 예외를 던지지 않음 (이미 삭제되었을 수 있음)
+      print('사용자 이미지 삭제 실패 (무시됨): $e');
+    }
+  }
 }

@@ -284,4 +284,35 @@ class FirebaseFirestoreDatasource {
       throw Exception('일기 조회 실패: $e');
     }
   }
+
+  Future<void> deleteUserData({required String userId}) async {
+    try {
+      // 사용자의 모든 일기 삭제
+      final diariesSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('diaries')
+          .get();
+
+      for (final doc in diariesSnapshot.docs) {
+        await doc.reference.delete();
+      }
+
+      // 사용자의 모든 기록 삭제
+      final recordsSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('records')
+          .get();
+
+      for (final doc in recordsSnapshot.docs) {
+        await doc.reference.delete();
+      }
+
+      // 사용자 문서 삭제 (있는 경우)
+      await _firestore.collection('users').doc(userId).delete();
+    } catch (e) {
+      throw Exception('사용자 데이터 삭제 실패: $e');
+    }
+  }
 }

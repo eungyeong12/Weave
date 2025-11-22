@@ -23,4 +23,6 @@ abstract class AuthRepository {
   });
 
   Future<Either<Failure, void>> signOut();
+
+  Future<Either<Failure, void>> deleteUser({required String userId});
 }

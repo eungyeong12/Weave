@@ -42,4 +42,25 @@ class FirebaseAuthDataSource {
   Future<void> signOut() async {
     await _auth.signOut();
   }
+
+  // 회원 탈퇴 메서드
+  Future<void> deleteUser() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('삭제할 사용자를 찾을 수 없습니다.');
+    }
+
+    try {
+      await user.delete();
+    } on FirebaseAuthException catch (e) {
+      // 재인증이 필요한 경우
+      if (e.code == 'requires-recent-login') {
+        throw Exception('보안을 위해 최근에 로그인한 사용자만 계정을 삭제할 수 있습니다. 다시 로그인해주세요.');
+      }
+      rethrow;
+    } catch (e) {
+      // 다른 예외는 그대로 전달
+      rethrow;
+    }
+  }
 }

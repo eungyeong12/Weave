@@ -1,0 +1,322 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:weave/di/injector.dart';
+import 'package:weave/presentation/screens/auth/login_screen.dart';
+import 'package:weave/presentation/widgets/common/delete_confirmation_dialog.dart';
+
+class SettingsScreen extends ConsumerStatefulWidget {
+  const SettingsScreen({super.key});
+
+  @override
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  bool _isPinLockEnabled = false;
+  bool _isBiometricLockEnabled = false;
+  bool _isDeleting = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final authState = ref.watch(authViewModelProvider);
+    final user = authState.user;
+    final isLoading = authState.isLoading;
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        automaticallyImplyLeading: false,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12),
+          child: IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.chevron_left, color: Colors.black),
+            constraints: const BoxConstraints(),
+            padding: EdgeInsets.zero,
+            visualDensity: VisualDensity.compact,
+          ),
+        ),
+        title: const Text(
+          '설정',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          children: [
+            // 잠금 설정 섹션
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Text(
+                '잠금 설정',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+            _buildSettingItem(
+              icon: Icons.lock_outline,
+              title: 'PIN 번호 잠금',
+              trailing: Switch(
+                value: _isPinLockEnabled,
+                onChanged: (value) {
+                  setState(() {
+                    _isPinLockEnabled = value;
+                    // TODO: PIN 번호 잠금 설정 구현
+                  });
+                },
+                activeColor: Colors.green,
+              ),
+            ),
+            _buildSettingItem(
+              icon: Icons.fingerprint,
+              title: '지문 잠금',
+              trailing: Switch(
+                value: _isBiometricLockEnabled,
+                onChanged: (value) {
+                  setState(() {
+                    _isBiometricLockEnabled = value;
+                    // TODO: 지문 잠금 설정 구현
+                  });
+                },
+                activeColor: Colors.green,
+              ),
+            ),
+            const SizedBox(height: 24),
+            // 계정 섹션
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Text(
+                '계정',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+            if (user != null)
+              _buildSettingItem(
+                icon: Icons.email_outlined,
+                title: '이메일',
+                subtitle: user.email,
+                trailing: null,
+              ),
+            _buildSettingItem(
+              icon: Icons.logout,
+              title: '로그아웃',
+              trailing: null,
+              onTap: (_isDeleting || isLoading)
+                  ? null
+                  : () => _showLogoutConfirmationDialog(context),
+            ),
+            _buildSettingItem(
+              icon: Icons.person_remove,
+              title: '회원 탈퇴',
+              trailing: _isDeleting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : null,
+              onTap: (_isDeleting || isLoading)
+                  ? null
+                  : () => _showDeleteAccountConfirmationDialog(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingItem({
+    required IconData icon,
+    required String title,
+    String? subtitle,
+    Widget? trailing,
+    Color? textColor,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            bottom: BorderSide(color: Colors.grey.shade200, width: 0.5),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: textColor ?? Colors.black87, size: 24),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: textColor ?? Colors.black87,
+                    ),
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (trailing != null) trailing,
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showLogoutConfirmationDialog(BuildContext context) {
+    DeleteConfirmationDialog.show(
+      context,
+      _logout,
+      message: '로그아웃하시겠습니까?',
+      confirmText: '로그아웃',
+      confirmColor: Colors.green,
+    );
+  }
+
+  void _showDeleteAccountConfirmationDialog(BuildContext context) {
+    DeleteConfirmationDialog.show(
+      context,
+      _deleteAccount,
+      message: '정말 회원 탈퇴하시겠습니까?\n모든 데이터가 삭제되며 복구할 수 없습니다.',
+      confirmText: '탈퇴',
+      confirmColor: Colors.red,
+    );
+  }
+
+  Future<void> _logout() async {
+    final viewModel = ref.read(authViewModelProvider.notifier);
+    await viewModel.signOut();
+
+    final state = ref.read(authViewModelProvider);
+
+    if (!mounted) return;
+
+    if (state.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(state.error!),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    // 로그아웃 성공 시 로그인 화면으로 이동
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
+  Future<void> _deleteAccount() async {
+    final authState = ref.read(authViewModelProvider);
+    final user = authState.user;
+
+    if (user == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('로그인이 필요합니다.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _isDeleting = true;
+    });
+
+    try {
+      final viewModel = ref.read(authViewModelProvider.notifier);
+      await viewModel.deleteUser(userId: user.uid);
+
+      final state = ref.read(authViewModelProvider);
+
+      if (!mounted) return;
+
+      if (state.error != null) {
+        // App Check 관련 오류는 무시하고 실제 오류만 표시
+        String errorMessage = state.error!;
+        if (errorMessage.contains('App Check') ||
+            errorMessage.contains('AppCheckProvider')) {
+          // App Check 오류는 경고일 뿐이므로 실제 탈퇴가 성공했는지 확인
+          // 에러가 있지만 사용자가 삭제되었을 수도 있음
+          if (ref.read(authViewModelProvider).user == null) {
+            // 사용자가 삭제되었으면 성공으로 처리
+            errorMessage = '';
+          }
+        }
+
+        if (errorMessage.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+          setState(() {
+            _isDeleting = false;
+          });
+          return;
+        }
+      }
+
+      // 회원 탈퇴 성공 시 로그인 화면으로 이동
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        (route) => false,
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('회원 탈퇴가 완료되었습니다.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isDeleting = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('회원 탈퇴 중 오류가 발생했습니다: ${e.toString()}'),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+}

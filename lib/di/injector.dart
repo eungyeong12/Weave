@@ -12,6 +12,7 @@ import 'package:weave/domain/repositories/diary/diary_repository.dart';
 import 'package:weave/domain/usecases/auth/sign_in_with_email_and_password.dart';
 import 'package:weave/domain/usecases/auth/sign_up_with_email_and_password.dart';
 import 'package:weave/domain/usecases/auth/sign_out.dart';
+import 'package:weave/domain/usecases/auth/delete_user.dart';
 import 'package:weave/domain/usecases/diary/save_daily_diary.dart';
 import 'package:weave/data/datasources/book/naver_book_datasource.dart';
 import 'package:weave/data/repositories/book/book_repository_impl.dart';
@@ -45,7 +46,11 @@ final firebaseAuthDataSourceProvider = Provider(
 );
 
 final authRepositoryProvider = Provider<AuthRepository>(
-  (ref) => AuthRepositoryImpl(ref.read(firebaseAuthDataSourceProvider)),
+  (ref) => AuthRepositoryImpl(
+    ref.read(firebaseAuthDataSourceProvider),
+    ref.read(firebaseFirestoreDatasourceProvider),
+    ref.read(firebaseStorageDatasourceProvider),
+  ),
 );
 
 final signInWithEmailAndPasswordUseCaseProvider = Provider(
@@ -60,11 +65,16 @@ final signOutUseCaseProvider = Provider(
   (ref) => SignOutUseCase(ref.read(authRepositoryProvider)),
 );
 
+final deleteUserUseCaseProvider = Provider(
+  (ref) => DeleteUserUseCase(ref.read(authRepositoryProvider)),
+);
+
 final authViewModelProvider = StateNotifierProvider<AuthViewModel, AuthState>(
   (ref) => AuthViewModel(
     ref.read(signInWithEmailAndPasswordUseCaseProvider),
     ref.read(signUpWithEmailAndPasswordUseCaseProvider),
     ref.read(signOutUseCaseProvider),
+    ref.read(deleteUserUseCaseProvider),
   ),
 );
 

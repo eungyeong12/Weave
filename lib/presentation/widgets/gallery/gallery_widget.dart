@@ -6,6 +6,7 @@ import 'package:weave/presentation/widgets/search/search_bar.dart';
 import 'package:weave/presentation/widgets/gallery/month_picker_bottom_sheet.dart';
 import 'package:weave/presentation/screens/diary/diary_detail_screen.dart';
 import 'package:weave/presentation/screens/record/record_detail_screen.dart';
+import 'package:weave/presentation/screens/settings/settings_screen.dart';
 
 class GalleryWidget extends StatefulWidget {
   final List<Record> records;
@@ -194,7 +195,7 @@ class _GalleryWidgetState extends State<GalleryWidget> {
               children: [
                 // 년도와 월 헤더
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                   child: Row(
                     children: [
                       GestureDetector(
@@ -226,6 +227,21 @@ class _GalleryWidgetState extends State<GalleryWidget> {
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
+                      const SizedBox(width: 8),
+                      // 설정 아이콘
+                      IconButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SettingsScreen(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.settings, color: Colors.grey),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
                     ],
                   ),
                 ),
