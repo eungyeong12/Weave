@@ -49,5 +49,7 @@
 	<string>사진을 선택하여 일기에 추가하기 위해 사진 라이브러리 접근 권한이 필요합니다.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>사진을 저장하기 위해 사진 라이브러리 접근 권한이 필요합니다.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>앱을 잠금 해제하기 위해 Face ID를 사용합니다.</string>
 </dict>
 </plist>

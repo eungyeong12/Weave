@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:weave/di/injector.dart';
 import 'package:weave/presentation/screens/auth/login_screen.dart';
 import 'package:weave/presentation/widgets/common/delete_confirmation_dialog.dart';
+import 'package:weave/core/services/biometric_service.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -15,6 +17,34 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _isPinLockEnabled = false;
   bool _isBiometricLockEnabled = false;
   bool _isDeleting = false;
+  bool _isBiometricAvailable = false;
+  bool _isAuthenticating = false; // 인증 중 플래그 추가
+  final BiometricService _biometricService = BiometricService();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBiometricAvailability();
+    _loadBiometricSetting();
+  }
+
+  Future<void> _checkBiometricAvailability() async {
+    final isAvailable = await _biometricService.isBiometricAvailable();
+    if (mounted) {
+      setState(() {
+        _isBiometricAvailable = isAvailable;
+      });
+    }
+  }
+
+  Future<void> _loadBiometricSetting() async {
+    final isEnabled = await _biometricService.isBiometricEnabled();
+    if (mounted) {
+      setState(() {
+        _isBiometricLockEnabled = isEnabled;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,20 +108,73 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 activeColor: Colors.green,
               ),
             ),
-            _buildSettingItem(
-              icon: Icons.fingerprint,
-              title: '지문 잠금',
-              trailing: Switch(
-                value: _isBiometricLockEnabled,
-                onChanged: (value) {
-                  setState(() {
-                    _isBiometricLockEnabled = value;
-                    // TODO: 지문 잠금 설정 구현
-                  });
-                },
-                activeColor: Colors.green,
+            // 웹에서는 생체 인증 옵션 숨김
+            if (!kIsWeb)
+              _buildSettingItem(
+                icon: Icons.fingerprint,
+                title: '생체 인증',
+                trailing: Switch(
+                  value: _isBiometricLockEnabled,
+                  onChanged: (_isBiometricAvailable && !_isAuthenticating)
+                      ? (value) async {
+                          // 이미 인증 중이면 무시
+                          if (_isAuthenticating) return;
+
+                          setState(() {
+                            _isAuthenticating = true;
+                          });
+
+                          try {
+                            if (value) {
+                              // 생체 인증 활성화: 다이얼로그 없이 바로 활성화
+                              // 실제 인증은 앱 실행 시에만 수행됨
+                              await _biometricService.setBiometricEnabled(true);
+                              if (mounted) {
+                                setState(() {
+                                  _isBiometricLockEnabled = true;
+                                  _isAuthenticating = false;
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      '생체 인증이 활성화되었습니다. 다음 앱 실행부터 생체 인증이 요구됩니다.',
+                                    ),
+                                    duration: Duration(seconds: 3),
+                                  ),
+                                );
+                              }
+                            } else {
+                              // 생체 인증 비활성화
+                              await _biometricService.setBiometricEnabled(
+                                false,
+                              );
+                              if (mounted) {
+                                setState(() {
+                                  _isBiometricLockEnabled = false;
+                                  _isAuthenticating = false;
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('생체 인증이 비활성화되었습니다.'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            }
+                          } catch (e) {
+                            // 에러 발생 시 플래그 초기화
+                            if (mounted) {
+                              setState(() {
+                                _isAuthenticating = false;
+                                _isBiometricLockEnabled = false;
+                              });
+                            }
+                          }
+                        }
+                      : null,
+                  activeColor: Colors.green,
+                ),
               ),
-            ),
             const SizedBox(height: 24),
             // 계정 섹션
             const Padding(
@@ -214,6 +297,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _logout() async {
+    // 로그아웃 시 세션 인증 상태 초기화
+    _biometricService.clearSessionAuth();
+
     final viewModel = ref.read(authViewModelProvider.notifier);
     await viewModel.signOut();
 

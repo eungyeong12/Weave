@@ -16,7 +16,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   DateTime? _selectedDate;
   DateTime _currentMonth = DateTime.now();
   String _gallerySearchQuery = '';
@@ -25,6 +25,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
       setState(() {});
@@ -35,7 +36,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // 생체 인증은 앱 실행 시에만 수행되므로 여기서는 아무것도 하지 않음
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _tabController.dispose();
     super.dispose();
   }

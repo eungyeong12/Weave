@@ -68,6 +68,13 @@ class CalendarWidget extends StatelessWidget {
     return date.year == currentMonth.year && date.month == currentMonth.month;
   }
 
+  bool _isToday(DateTime date) {
+    final now = DateTime.now();
+    return date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day;
+  }
+
   String? _getLatestImageUrl(DateTime date) {
     // 해당 날짜의 모든 기록과 일기 수집
     final dayRecords = records.where((record) {
@@ -135,6 +142,7 @@ class CalendarWidget extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Column(
             children: [
+              const SizedBox(height: 8),
               // 캘린더 헤더 (월/년도 및 네비게이션)
               Row(
                 children: [
@@ -239,6 +247,7 @@ class CalendarWidget extends StatelessWidget {
                     final days = _getDaysInMonth(currentMonth);
                     final date = days[index];
                     final isCurrentMonth = _isCurrentMonth(date, currentMonth);
+                    final isToday = _isToday(date);
                     final imageUrl = _getLatestImageUrl(date);
 
                     return GestureDetector(
@@ -271,29 +280,52 @@ class CalendarWidget extends StatelessWidget {
                               alignment: Alignment.topCenter,
                               child: Padding(
                                 padding: const EdgeInsets.only(top: 4),
-                                child: Text(
-                                  '${date.day}',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.normal,
-                                    color: !isCurrentMonth
-                                        ? Colors.grey.shade300
-                                        : (imageUrl != null && isCurrentMonth
-                                              ? Colors.white
-                                              : Colors.black87),
-                                    shadows: imageUrl != null && isCurrentMonth
-                                        ? [
-                                            Shadow(
-                                              offset: const Offset(0, 1),
-                                              blurRadius: 3,
-                                              color: Colors.black.withOpacity(
-                                                0.5,
-                                              ),
+                                child: isToday && isCurrentMonth
+                                    ? Container(
+                                        width: 24,
+                                        height: 24,
+                                        decoration: BoxDecoration(
+                                          color: Colors.green,
+                                          shape: BoxShape.rectangle,
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            '${date.day}',
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.normal,
+                                              color: Colors.white,
                                             ),
-                                          ]
-                                        : null,
-                                  ),
-                                ),
+                                          ),
+                                        ),
+                                      )
+                                    : Text(
+                                        '${date.day}',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.normal,
+                                          color: !isCurrentMonth
+                                              ? Colors.grey.shade300
+                                              : (imageUrl != null &&
+                                                        isCurrentMonth
+                                                    ? Colors.white
+                                                    : Colors.black87),
+                                          shadows:
+                                              imageUrl != null && isCurrentMonth
+                                              ? [
+                                                  Shadow(
+                                                    offset: const Offset(0, 1),
+                                                    blurRadius: 3,
+                                                    color: Colors.black
+                                                        .withOpacity(0.5),
+                                                  ),
+                                                ]
+                                              : null,
+                                        ),
+                                      ),
                               ),
                             ),
                           ],

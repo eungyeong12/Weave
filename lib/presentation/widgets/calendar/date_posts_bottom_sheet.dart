@@ -308,7 +308,7 @@ class _RecordItem extends StatelessWidget {
                           fontSize: 11,
                           color: Colors.grey.shade700,
                         ),
-                        maxLines: 2,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],

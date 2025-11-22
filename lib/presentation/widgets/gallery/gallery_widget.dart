@@ -193,6 +193,7 @@ class _GalleryWidgetState extends State<GalleryWidget> {
           child: SafeArea(
             child: Column(
               children: [
+                const SizedBox(height: 8),
                 // 년도와 월 헤더
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),

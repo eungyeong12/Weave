@@ -9,6 +9,8 @@ import 'di/injector.dart';
 import 'data/models/user/user_dto.dart';
 import 'presentation/screens/auth/login_screen.dart';
 import 'presentation/screens/home/home_screen.dart';
+import 'presentation/screens/auth/lock_screen.dart';
+import 'core/services/biometric_service.dart';
 
 void main() async {
   // Flutter 바인딩 초기화
@@ -53,9 +55,6 @@ class _MyAppState extends ConsumerState<MyApp> {
     final firebaseAuth = ref.read(firebaseAuthProvider);
     final currentUser = firebaseAuth.currentUser;
 
-    // 초기 라우트 결정
-    final initialRoute = currentUser != null ? '/home' : '/';
-
     return MaterialApp(
       title: 'Weave',
       theme: ThemeData(
@@ -69,7 +68,7 @@ class _MyAppState extends ConsumerState<MyApp> {
       ],
       supportedLocales: const [Locale('ko', 'KR'), Locale('en', 'US')],
       locale: const Locale('ko', 'KR'),
-      initialRoute: initialRoute,
+      home: _buildInitialScreen(currentUser),
       builder: (context, child) {
         if (kIsWeb) {
           return Container(
@@ -85,9 +84,42 @@ class _MyAppState extends ConsumerState<MyApp> {
         return child!;
       },
       routes: {
-        '/': (context) => const LoginScreen(),
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const HomeScreen(),
+        '/lock': (context) => const LockScreen(),
+      },
+    );
+  }
+
+  Widget _buildInitialScreen(dynamic currentUser) {
+    if (currentUser == null) {
+      return const LoginScreen();
+    }
+
+    // 웹에서는 생체 인증을 사용하지 않으므로 바로 홈 화면으로 이동
+    if (kIsWeb) {
+      return const HomeScreen();
+    }
+
+    // 생체 인증이 활성화되어 있는지 확인
+    final biometricService = BiometricService();
+    return FutureBuilder<bool>(
+      future: biometricService.isBiometricEnabled(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          // 로딩 중에는 빈 화면 또는 로딩 인디케이터 표시
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        // 생체 인증이 활성화되어 있으면 잠금 화면, 아니면 홈 화면
+        // 앱 실행 시마다 인증을 요구하므로 항상 잠금 화면으로 이동
+        if (snapshot.data == true) {
+          return const LockScreen();
+        } else {
+          return const HomeScreen();
+        }
       },
     );
   }
