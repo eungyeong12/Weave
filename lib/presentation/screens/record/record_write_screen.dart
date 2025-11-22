@@ -3,10 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:weave/domain/entities/book/book.dart';
 import 'package:weave/domain/entities/movie/movie.dart';
 import 'package:weave/domain/entities/performance/performance.dart';
-import 'package:weave/presentation/widgets/record/save_button.dart';
 import 'package:weave/presentation/widgets/record/star_rating.dart';
 import 'package:weave/presentation/widgets/diary/diary_text_field.dart';
-import 'package:weave/presentation/widgets/diary/date_picker_bottom_sheet.dart';
+import 'package:weave/presentation/widgets/common/write_screen_app_bar.dart';
 import 'package:weave/di/injector.dart';
 import 'package:weave/presentation/screens/home/home_screen.dart';
 import 'package:weave/domain/entities/record/record.dart';
@@ -96,13 +95,6 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
       case RecordType.performance:
         return widget.performance?.posterUrl;
     }
-  }
-
-  String _formatDate(DateTime date) {
-    final year = date.year;
-    final month = date.month.toString().padLeft(2, '0');
-    final day = date.day.toString().padLeft(2, '0');
-    return '$year.$month.$day';
   }
 
   String _formatPubDate(String pubDate) {
@@ -359,53 +351,20 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
   Widget build(BuildContext context) {
     final imageUrl = _getImageUrl();
     final title = _getTitle();
+    final state = ref.watch(recordWriteViewModelProvider);
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 12),
-          child: GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: const Icon(Icons.chevron_left, color: Colors.black),
-          ),
-        ),
-        title: GestureDetector(
-          onTap: () async {
-            final DateTime? picked = await DatePickerBottomSheet.show(
-              context,
-              _selectedDate,
-            );
-            if (picked != null) {
-              setState(() {
-                _selectedDate = picked;
-              });
-            }
-          },
-          child: Text(
-            _formatDate(_selectedDate),
-            style: const TextStyle(
-              color: Colors.black,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        actions: [
-          Consumer(
-            builder: (context, ref, _) {
-              final state = ref.watch(recordWriteViewModelProvider);
-              return SaveButton(
-                onSave: _save,
-                isContentEmpty: _contentController.text.trim().isEmpty,
-                isLoading: state.isLoading,
-              );
-            },
-          ),
-        ],
+      appBar: WriteScreenAppBar(
+        selectedDate: _selectedDate,
+        onDateChanged: (date) {
+          setState(() {
+            _selectedDate = date;
+          });
+        },
+        onSave: _save,
+        isContentEmpty: _contentController.text.trim().isEmpty,
+        isLoading: state.isLoading,
       ),
       body: SafeArea(
         child: GestureDetector(

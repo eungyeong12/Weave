@@ -4,6 +4,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:weave/domain/entities/diary/diary.dart';
 import 'package:weave/presentation/screens/diary/daily_diary_write_screen.dart';
 import 'package:weave/presentation/screens/home/home_screen.dart';
+import 'package:weave/presentation/widgets/common/detail_screen_app_bar.dart';
+import 'package:weave/presentation/widgets/common/delete_confirmation_dialog.dart';
 import 'package:weave/di/injector.dart';
 
 class DiaryDetailScreen extends ConsumerStatefulWidget {
@@ -17,13 +19,6 @@ class DiaryDetailScreen extends ConsumerStatefulWidget {
 
 class _DiaryDetailScreenState extends ConsumerState<DiaryDetailScreen> {
   Diary get diary => widget.diary;
-
-  String _formatDate(DateTime date) {
-    final year = date.year;
-    final month = date.month.toString().padLeft(2, '0');
-    final day = date.day.toString().padLeft(2, '0');
-    return '$year.$month.$day';
-  }
 
   String _getProxiedImageUrl(String originalUrl) {
     try {
@@ -39,90 +34,18 @@ class _DiaryDetailScreenState extends ConsumerState<DiaryDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        automaticallyImplyLeading: false,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 12),
-          child: IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.chevron_left, color: Colors.black),
-            constraints: const BoxConstraints(),
-            padding: EdgeInsets.zero,
-            visualDensity: VisualDensity.compact,
-          ),
-        ),
-        title: Text(
-          _formatDate(diary.date),
-          style: const TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        actions: [
-          Theme(
-            data: Theme.of(
-              context,
-            ).copyWith(splashFactory: InkRipple.splashFactory),
-            child: PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert, color: Colors.black),
-              color: Colors.green.shade200,
-              splashRadius: 20,
-              onSelected: (value) {
-                if (value == 'edit') {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DailyDiaryWriteScreen(
-                        selectedDate: diary.date,
-                        diary: diary,
-                      ),
-                    ),
-                  );
-                } else if (value == 'delete') {
-                  _showDeleteConfirmationDialog(context);
-                }
-              },
-              itemBuilder: (BuildContext context) => [
-                PopupMenuItem<String>(
-                  value: 'edit',
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 0,
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8),
-                        child: Text('수정'),
-                      ),
-                    ),
-                  ),
-                ),
-                PopupMenuItem<String>(
-                  value: 'delete',
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 0,
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8),
-                        child: Text('삭제'),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+      appBar: DetailScreenAppBar(
+        date: diary.date,
+        onEdit: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  DailyDiaryWriteScreen(selectedDate: diary.date, diary: diary),
             ),
-          ),
-        ],
+          );
+        },
+        onDelete: () => _showDeleteConfirmationDialog(context),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -202,49 +125,7 @@ class _DiaryDetailScreenState extends ConsumerState<DiaryDetailScreen> {
   }
 
   void _showDeleteConfirmationDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-          content: const Text(
-            '정말 삭제하시겠습니까?',
-            style: TextStyle(fontSize: 16),
-            textAlign: TextAlign.center,
-          ),
-          actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          actionsAlignment: MainAxisAlignment.center,
-          actions: [
-            SizedBox(
-              width: 100,
-              child: TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                child: const Text('취소'),
-              ),
-            ),
-            const SizedBox(width: 8),
-            SizedBox(
-              width: 100,
-              child: TextButton(
-                onPressed: () {
-                  Navigator.pop(dialogContext);
-                  _deleteDiary();
-                },
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.green,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                child: const Text('삭제'),
-              ),
-            ),
-          ],
-        );
-      },
-    );
+    DeleteConfirmationDialog.show(context, _deleteDiary);
   }
 
   Future<void> _deleteDiary() async {
