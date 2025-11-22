@@ -223,13 +223,13 @@ class _RecordItem extends StatelessWidget {
             child: record.imageUrl != null && record.imageUrl!.isNotEmpty
                 ? Image.network(
                     getProxiedImageUrl(record.imageUrl!),
-                    width: 90,
-                    height: 90,
+                    width: 92,
+                    height: 92,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
-                        width: 90,
-                        height: 90,
+                        width: 92,
+                        height: 92,
                         color: Colors.grey.shade200,
                         child: Icon(
                           getTypeIcon(record.type),
@@ -240,8 +240,8 @@ class _RecordItem extends StatelessWidget {
                     },
                   )
                 : Container(
-                    width: 90,
-                    height: 90,
+                    width: 92,
+                    height: 92,
                     color: Colors.grey.shade200,
                     child: Icon(
                       getTypeIcon(record.type),
@@ -366,13 +366,13 @@ class _DiaryItem extends StatelessWidget {
             child: diary.imageUrls.isNotEmpty
                 ? Image.network(
                     getProxiedImageUrl(diary.imageUrls.first),
-                    width: 90,
-                    height: 90,
+                    width: 92,
+                    height: 92,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
-                        width: 90,
-                        height: 90,
+                        width: 92,
+                        height: 92,
                         color: Colors.grey.shade200,
                         child: Icon(
                           Icons.book,
@@ -383,8 +383,8 @@ class _DiaryItem extends StatelessWidget {
                     },
                   )
                 : Container(
-                    width: 90,
-                    height: 90,
+                    width: 92,
+                    height: 92,
                     color: Colors.grey.shade200,
                     child: Icon(
                       Icons.book,

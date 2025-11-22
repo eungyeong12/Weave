@@ -6,6 +6,7 @@ import 'package:weave/domain/entities/performance/performance.dart';
 import 'package:weave/presentation/widgets/record/save_button.dart';
 import 'package:weave/presentation/widgets/record/star_rating.dart';
 import 'package:weave/presentation/widgets/diary/diary_text_field.dart';
+import 'package:weave/presentation/widgets/diary/date_picker_bottom_sheet.dart';
 import 'package:weave/di/injector.dart';
 import 'package:weave/presentation/screens/home/home_screen.dart';
 
@@ -42,6 +43,13 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
   final TextEditingController _contentController = TextEditingController();
   final FocusNode _contentFocusNode = FocusNode();
   double _rating = 0.0;
+  late DateTime _selectedDate;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDate = widget.selectedDate ?? DateTime.now();
+  }
 
   @override
   void dispose() {
@@ -191,12 +199,11 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
     }
 
     final viewModel = ref.read(recordWriteViewModelProvider.notifier);
-    final selectedDate = widget.selectedDate ?? DateTime.now();
 
     await viewModel.saveRecord(
       userId: user.uid,
       type: typeString,
-      date: selectedDate,
+      date: _selectedDate,
       title: _getTitle(),
       imageUrl: _getImageUrl(),
       content: _contentController.text,
@@ -250,12 +257,25 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
             child: const Icon(Icons.chevron_left, color: Colors.black),
           ),
         ),
-        title: Text(
-          _formatDate(widget.selectedDate ?? DateTime.now()),
-          style: const TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+        title: GestureDetector(
+          onTap: () async {
+            final DateTime? picked = await DatePickerBottomSheet.show(
+              context,
+              _selectedDate,
+            );
+            if (picked != null) {
+              setState(() {
+                _selectedDate = picked;
+              });
+            }
+          },
+          child: Text(
+            _formatDate(_selectedDate),
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
         actions: [
@@ -284,8 +304,8 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
               children: [
                 // 아이템 정보 섹션
                 Container(
-                  margin: const EdgeInsets.all(16),
-                  padding: const EdgeInsets.all(16),
+                  margin: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade50,
                     borderRadius: BorderRadius.circular(12),
@@ -300,13 +320,13 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
                           borderRadius: BorderRadius.circular(8),
                           child: Image.network(
                             widget.getProxiedImageUrl(imageUrl),
-                            width: 100,
-                            height: 140,
+                            width: 80,
+                            height: 112,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
-                                width: 100,
-                                height: 140,
+                                width: 80,
+                                height: 112,
                                 color: Colors.grey.shade200,
                                 child: Icon(
                                   widget.type == RecordType.book
@@ -315,6 +335,7 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
                                       ? Icons.movie
                                       : Icons.theater_comedy,
                                   color: Colors.grey,
+                                  size: 24,
                                 ),
                               );
                             },
@@ -322,8 +343,8 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
                         )
                       else
                         Container(
-                          width: 100,
-                          height: 140,
+                          width: 80,
+                          height: 112,
                           decoration: BoxDecoration(
                             color: Colors.grey.shade200,
                             borderRadius: BorderRadius.circular(8),
@@ -335,9 +356,10 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
                                 ? Icons.movie
                                 : Icons.theater_comedy,
                             color: Colors.grey,
+                            size: 24,
                           ),
                         ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 12),
                       // 정보
                       Expanded(
                         child: Column(
@@ -346,14 +368,14 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
                             Text(
                               title,
                               style: const TextStyle(
-                                fontSize: 16,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.black87,
                               ),
                               maxLines: 3,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 8),
                             ..._buildInfoWidgets(),
                           ],
                         ),
@@ -364,9 +386,9 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
                 // 별점 영역
                 Padding(
                   padding: const EdgeInsets.only(
-                    left: 16,
-                    right: 16,
-                    bottom: 16,
+                    left: 12,
+                    right: 12,
+                    bottom: 12,
                   ),
                   child: Row(
                     children: [
@@ -407,21 +429,21 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(bottom: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 60,
+            width: 50,
             child: Text(
               label,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontSize: 12, color: Colors.black87),
+              style: const TextStyle(fontSize: 11, color: Colors.black87),
             ),
           ),
         ],

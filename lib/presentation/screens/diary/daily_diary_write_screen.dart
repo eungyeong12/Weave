@@ -6,6 +6,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:weave/di/injector.dart';
 import 'package:weave/presentation/widgets/diary/image_list_section.dart';
 import 'package:weave/presentation/widgets/diary/diary_text_field.dart';
+import 'package:weave/presentation/widgets/diary/date_picker_bottom_sheet.dart';
 import 'package:weave/presentation/widgets/record/save_button.dart';
 import 'package:weave/presentation/screens/home/home_screen.dart';
 
@@ -24,6 +25,13 @@ class _DailyDiaryWriteScreenState extends ConsumerState<DailyDiaryWriteScreen> {
   final FocusNode _diaryFocusNode = FocusNode();
   final ImagePicker _picker = ImagePicker();
   final List<XFile> _images = [];
+  late DateTime _selectedDate;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDate = widget.selectedDate;
+  }
 
   @override
   void dispose() {
@@ -180,7 +188,7 @@ class _DailyDiaryWriteScreenState extends ConsumerState<DailyDiaryWriteScreen> {
 
     await viewModel.saveDailyDiary(
       userId: user.uid,
-      date: widget.selectedDate,
+      date: _selectedDate,
       content: _diaryController.text,
       imageFilePaths: imageFilePaths,
     );
@@ -233,12 +241,25 @@ class _DailyDiaryWriteScreenState extends ConsumerState<DailyDiaryWriteScreen> {
             child: const Icon(Icons.chevron_left, color: Colors.black),
           ),
         ),
-        title: Text(
-          _formatDate(widget.selectedDate),
-          style: const TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+        title: GestureDetector(
+          onTap: () async {
+            final DateTime? picked = await DatePickerBottomSheet.show(
+              context,
+              _selectedDate,
+            );
+            if (picked != null) {
+              setState(() {
+                _selectedDate = picked;
+              });
+            }
+          },
+          child: Text(
+            _formatDate(_selectedDate),
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
         actions: [

@@ -12,7 +12,7 @@ class DiaryTextField extends StatelessWidget {
     required this.controller,
     required this.focusNode,
     this.onChanged,
-    this.minHeight = 540,
+    this.minHeight = 420,
     this.hintText = '오늘 하루를 기록해보세요',
   });
 
