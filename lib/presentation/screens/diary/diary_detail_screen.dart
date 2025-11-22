@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:weave/domain/entities/diary/diary.dart';
+import 'package:weave/presentation/screens/diary/daily_diary_write_screen.dart';
 
 class DiaryDetailScreen extends StatelessWidget {
   final Diary diary;
@@ -62,7 +63,15 @@ class DiaryDetailScreen extends StatelessWidget {
               splashRadius: 20,
               onSelected: (value) {
                 if (value == 'edit') {
-                  // TODO: 수정 기능 구현
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DailyDiaryWriteScreen(
+                        selectedDate: diary.date,
+                        diary: diary,
+                      ),
+                    ),
+                  );
                 } else if (value == 'delete') {
                   // TODO: 삭제 기능 구현
                 }
@@ -141,15 +150,18 @@ class DiaryDetailScreen extends StatelessWidget {
 
     return SizedBox(
       height: imageHeight,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: diary.imageUrls.length,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: EdgeInsets.only(left: index == 0 ? 0 : 8),
-            child: _buildImageItem(diary.imageUrls[index], index),
-          );
-        },
+      child: Center(
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          shrinkWrap: true,
+          itemCount: diary.imageUrls.length,
+          itemBuilder: (context, index) {
+            return Padding(
+              padding: EdgeInsets.only(left: index == 0 ? 0 : 8),
+              child: _buildImageItem(diary.imageUrls[index], index),
+            );
+          },
+        ),
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:weave/domain/entities/record/record.dart';
+import 'package:weave/presentation/screens/record/record_write_screen.dart';
 
 class RecordDetailScreen extends StatelessWidget {
   final Record record;
@@ -154,7 +155,33 @@ class RecordDetailScreen extends StatelessWidget {
               splashRadius: 20,
               onSelected: (value) {
                 if (value == 'edit') {
-                  // TODO: 수정 기능 구현
+                  // RecordType 변환
+                  RecordType recordType;
+                  switch (record.type) {
+                    case 'book':
+                      recordType = RecordType.book;
+                      break;
+                    case 'movie':
+                      recordType = RecordType.movie;
+                      break;
+                    case 'performance':
+                      recordType = RecordType.performance;
+                      break;
+                    default:
+                      return; // 알 수 없는 타입이면 수정 화면으로 이동하지 않음
+                  }
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => RecordWriteScreen(
+                        type: recordType,
+                        getProxiedImageUrl: getProxiedImageUrl,
+                        selectedDate: record.date,
+                        record: record,
+                      ),
+                    ),
+                  );
                 } else if (value == 'delete') {
                   // TODO: 삭제 기능 구현
                 }

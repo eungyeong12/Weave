@@ -24,9 +24,12 @@ class DailyDiaryWriteState {
 
 class DailyDiaryWriteViewModel extends StateNotifier<DailyDiaryWriteState> {
   final SaveDailyDiaryUseCase _saveDailyDiaryUseCase;
+  final UpdateDailyDiaryUseCase _updateDailyDiaryUseCase;
 
-  DailyDiaryWriteViewModel(this._saveDailyDiaryUseCase)
-    : super(const DailyDiaryWriteState());
+  DailyDiaryWriteViewModel(
+    this._saveDailyDiaryUseCase,
+    this._updateDailyDiaryUseCase,
+  ) : super(const DailyDiaryWriteState());
 
   Future<void> saveDailyDiary({
     required String userId,
@@ -56,6 +59,42 @@ class DailyDiaryWriteViewModel extends StateNotifier<DailyDiaryWriteState> {
       state = state.copyWith(
         isLoading: false,
         error: '일기 저장 중 예상치 못한 오류가 발생했습니다.',
+      );
+    }
+  }
+
+  Future<void> updateDailyDiary({
+    required String diaryId,
+    required String userId,
+    required DateTime date,
+    required String content,
+    required List<String> existingImageUrls,
+    required List<String> newImageFilePaths,
+  }) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+
+    try {
+      final Either<Failure, Diary> result = await _updateDailyDiaryUseCase(
+        diaryId: diaryId,
+        userId: userId,
+        date: date,
+        content: content,
+        existingImageUrls: existingImageUrls,
+        newImageFilePaths: newImageFilePaths,
+      );
+
+      result.fold(
+        (failure) {
+          state = state.copyWith(isLoading: false, error: failure.message);
+        },
+        (_) {
+          state = state.copyWith(isLoading: false, clearError: true);
+        },
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: '일기 업데이트 중 예상치 못한 오류가 발생했습니다.',
       );
     }
   }

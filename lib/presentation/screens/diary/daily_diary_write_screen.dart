@@ -9,11 +9,17 @@ import 'package:weave/presentation/widgets/diary/diary_text_field.dart';
 import 'package:weave/presentation/widgets/diary/date_picker_bottom_sheet.dart';
 import 'package:weave/presentation/widgets/record/save_button.dart';
 import 'package:weave/presentation/screens/home/home_screen.dart';
+import 'package:weave/domain/entities/diary/diary.dart';
 
 class DailyDiaryWriteScreen extends ConsumerStatefulWidget {
   final DateTime selectedDate;
+  final Diary? diary; // 수정 모드일 때 기존 일기 데이터
 
-  const DailyDiaryWriteScreen({super.key, required this.selectedDate});
+  const DailyDiaryWriteScreen({
+    super.key,
+    required this.selectedDate,
+    this.diary,
+  });
 
   @override
   ConsumerState<DailyDiaryWriteScreen> createState() =>
@@ -25,12 +31,18 @@ class _DailyDiaryWriteScreenState extends ConsumerState<DailyDiaryWriteScreen> {
   final FocusNode _diaryFocusNode = FocusNode();
   final ImagePicker _picker = ImagePicker();
   final List<XFile> _images = [];
+  final List<String> _existingImageUrls = []; // 수정 모드일 때 기존 이미지 URL
   late DateTime _selectedDate;
 
   @override
   void initState() {
     super.initState();
-    _selectedDate = widget.selectedDate;
+    _selectedDate = widget.diary?.date ?? widget.selectedDate;
+    // 수정 모드일 때 기존 데이터 로드
+    if (widget.diary != null) {
+      _diaryController.text = widget.diary!.content;
+      _existingImageUrls.addAll(widget.diary!.imageUrls);
+    }
   }
 
   @override
@@ -154,6 +166,12 @@ class _DailyDiaryWriteScreenState extends ConsumerState<DailyDiaryWriteScreen> {
     });
   }
 
+  void _removeExistingImage(int index) {
+    setState(() {
+      _existingImageUrls.removeAt(index);
+    });
+  }
+
   Future<void> _save() async {
     // 내용이 비어있으면 저장하지 않음
     if (_diaryController.text.trim().isEmpty) {
@@ -186,12 +204,26 @@ class _DailyDiaryWriteScreenState extends ConsumerState<DailyDiaryWriteScreen> {
     final viewModel = ref.read(dailyDiaryWriteViewModelProvider.notifier);
     final imageFilePaths = _images.map((image) => image.path).toList();
 
-    await viewModel.saveDailyDiary(
-      userId: user.uid,
-      date: _selectedDate,
-      content: _diaryController.text,
-      imageFilePaths: imageFilePaths,
-    );
+    // 수정 모드인지 확인
+    if (widget.diary != null && widget.diary!.id != null) {
+      // 업데이트 모드
+      await viewModel.updateDailyDiary(
+        diaryId: widget.diary!.id!,
+        userId: user.uid,
+        date: _selectedDate,
+        content: _diaryController.text,
+        existingImageUrls: _existingImageUrls,
+        newImageFilePaths: imageFilePaths,
+      );
+    } else {
+      // 새로 작성 모드
+      await viewModel.saveDailyDiary(
+        userId: user.uid,
+        date: _selectedDate,
+        content: _diaryController.text,
+        imageFilePaths: imageFilePaths,
+      );
+    }
 
     final state = ref.read(dailyDiaryWriteViewModelProvider);
 
@@ -213,9 +245,9 @@ class _DailyDiaryWriteScreenState extends ConsumerState<DailyDiaryWriteScreen> {
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('일기가 저장되었습니다.'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(widget.diary != null ? '기록이 수정되었습니다.' : '기록이 저장되었습니다.'),
+          duration: const Duration(seconds: 2),
         ),
       );
     }
@@ -289,8 +321,10 @@ class _DailyDiaryWriteScreenState extends ConsumerState<DailyDiaryWriteScreen> {
                 // 사진 추가 영역
                 ImageListSection(
                   images: _images,
+                  existingImageUrls: _existingImageUrls,
                   onAddImage: _addImage,
                   onRemoveImage: _removeImage,
+                  onRemoveExistingImage: _removeExistingImage,
                 ),
                 // 일기 텍스트 입력 영역
                 DiaryTextField(

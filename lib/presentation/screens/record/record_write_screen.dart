@@ -9,6 +9,7 @@ import 'package:weave/presentation/widgets/diary/diary_text_field.dart';
 import 'package:weave/presentation/widgets/diary/date_picker_bottom_sheet.dart';
 import 'package:weave/di/injector.dart';
 import 'package:weave/presentation/screens/home/home_screen.dart';
+import 'package:weave/domain/entities/record/record.dart';
 
 enum RecordType { book, movie, performance }
 
@@ -19,6 +20,7 @@ class RecordWriteScreen extends ConsumerStatefulWidget {
   final Performance? performance;
   final String Function(String) getProxiedImageUrl;
   final DateTime? selectedDate;
+  final Record? record; // 수정 모드일 때 기존 기록 데이터
 
   const RecordWriteScreen({
     super.key,
@@ -28,8 +30,10 @@ class RecordWriteScreen extends ConsumerStatefulWidget {
     this.performance,
     required this.getProxiedImageUrl,
     this.selectedDate,
+    this.record,
   }) : assert(
-         (type == RecordType.book && book != null) ||
+         record != null ||
+             (type == RecordType.book && book != null) ||
              (type == RecordType.movie && movie != null) ||
              (type == RecordType.performance && performance != null),
          '타입에 맞는 데이터가 필요합니다.',
@@ -48,7 +52,13 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedDate = widget.selectedDate ?? DateTime.now();
+    _selectedDate =
+        widget.record?.date ?? widget.selectedDate ?? DateTime.now();
+    // 수정 모드일 때 기존 데이터 로드
+    if (widget.record != null) {
+      _contentController.text = widget.record!.content;
+      _rating = widget.record!.rating;
+    }
   }
 
   @override
@@ -59,6 +69,10 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
   }
 
   String _getTitle() {
+    // 수정 모드일 때는 Record의 title 사용
+    if (widget.record != null) {
+      return widget.record!.title;
+    }
     switch (widget.type) {
       case RecordType.book:
         return widget.book?.title ?? '';
@@ -70,6 +84,10 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
   }
 
   String? _getImageUrl() {
+    // 수정 모드일 때는 Record의 imageUrl 사용
+    if (widget.record != null) {
+      return widget.record!.imageUrl;
+    }
     switch (widget.type) {
       case RecordType.book:
         return widget.book?.imageUrl;
@@ -99,6 +117,78 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
   }
 
   List<Widget> _buildInfoWidgets() {
+    // 수정 모드일 때는 Record의 metadata 사용
+    if (widget.record != null && widget.record!.metadata != null) {
+      final metadata = widget.record!.metadata!;
+      final widgets = <Widget>[];
+      switch (widget.record!.type) {
+        case 'book':
+          if (metadata['author'] != null &&
+              metadata['author'].toString().isNotEmpty) {
+            widgets.add(
+              _InfoRow(label: '저자', value: metadata['author'].toString()),
+            );
+          }
+          if (metadata['publisher'] != null &&
+              metadata['publisher'].toString().isNotEmpty) {
+            widgets.add(
+              _InfoRow(label: '출판사', value: metadata['publisher'].toString()),
+            );
+          }
+          if (metadata['pubDate'] != null &&
+              metadata['pubDate'].toString().isNotEmpty) {
+            widgets.add(
+              _InfoRow(
+                label: '출판일',
+                value: _formatPubDate(metadata['pubDate'].toString()),
+              ),
+            );
+          }
+          break;
+        case 'movie':
+          if (metadata['releaseDate'] != null &&
+              metadata['releaseDate'].toString().isNotEmpty) {
+            widgets.add(
+              _InfoRow(label: '개봉일', value: metadata['releaseDate'].toString()),
+            );
+          }
+          if (metadata['voteAverage'] != null) {
+            widgets.add(
+              _InfoRow(label: '평점', value: metadata['voteAverage'].toString()),
+            );
+          }
+          break;
+        case 'performance':
+          if (metadata['venue'] != null &&
+              metadata['venue'].toString().isNotEmpty) {
+            widgets.add(
+              _InfoRow(label: '공연장', value: metadata['venue'].toString()),
+            );
+          }
+          if (metadata['startDate'] != null && metadata['endDate'] != null) {
+            widgets.add(
+              _InfoRow(
+                label: '공연기간',
+                value: '${metadata['startDate']} ~ ${metadata['endDate']}',
+              ),
+            );
+          } else if (metadata['startDate'] != null) {
+            widgets.add(
+              _InfoRow(label: '공연일', value: metadata['startDate'].toString()),
+            );
+          }
+          if (metadata['genre'] != null &&
+              metadata['genre'].toString().isNotEmpty) {
+            widgets.add(
+              _InfoRow(label: '장르', value: metadata['genre'].toString()),
+            );
+          }
+          break;
+      }
+      return widgets;
+    }
+
+    // 새로 작성 모드
     switch (widget.type) {
       case RecordType.book:
         final book = widget.book!;
@@ -165,62 +255,77 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
 
     // 타입 문자열 변환
     String typeString;
-    switch (widget.type) {
-      case RecordType.book:
-        typeString = 'book';
-        break;
-      case RecordType.movie:
-        typeString = 'movie';
-        break;
-      case RecordType.performance:
-        typeString = 'performance';
-        break;
-    }
-
-    // 메타데이터 생성
     Map<String, dynamic> metadata = {};
-    switch (widget.type) {
-      case RecordType.book:
-        final book = widget.book!;
-        metadata = {
-          'author': book.author,
-          'publisher': book.publisher,
-          'pubDate': book.pubDate,
-          'isbn': book.isbn,
-        };
-        break;
-      case RecordType.movie:
-        final movie = widget.movie!;
-        metadata = {
-          'releaseDate': movie.releaseDate,
-          'voteAverage': movie.voteAverage,
-          'id': movie.id,
-        };
-        break;
-      case RecordType.performance:
-        final performance = widget.performance!;
-        metadata = {
-          'venue': performance.venue,
-          'startDate': performance.startDate,
-          'endDate': performance.endDate,
-          'genre': performance.genre,
-          'id': performance.id,
-        };
-        break;
+
+    // 수정 모드일 때는 Record의 데이터 사용
+    if (widget.record != null) {
+      typeString = widget.record!.type;
+      metadata = widget.record!.metadata ?? {};
+    } else {
+      // 새로 작성 모드
+      switch (widget.type) {
+        case RecordType.book:
+          typeString = 'book';
+          final book = widget.book!;
+          metadata = {
+            'author': book.author,
+            'publisher': book.publisher,
+            'pubDate': book.pubDate,
+            'isbn': book.isbn,
+          };
+          break;
+        case RecordType.movie:
+          typeString = 'movie';
+          final movie = widget.movie!;
+          metadata = {
+            'releaseDate': movie.releaseDate,
+            'voteAverage': movie.voteAverage,
+            'id': movie.id,
+          };
+          break;
+        case RecordType.performance:
+          typeString = 'performance';
+          final performance = widget.performance!;
+          metadata = {
+            'venue': performance.venue,
+            'startDate': performance.startDate,
+            'endDate': performance.endDate,
+            'genre': performance.genre,
+            'id': performance.id,
+          };
+          break;
+      }
     }
 
     final viewModel = ref.read(recordWriteViewModelProvider.notifier);
 
-    await viewModel.saveRecord(
-      userId: user.uid,
-      type: typeString,
-      date: _selectedDate,
-      title: _getTitle(),
-      imageUrl: _getImageUrl(),
-      content: _contentController.text,
-      rating: _rating,
-      metadata: metadata,
-    );
+    // 수정 모드인지 확인
+    if (widget.record != null && widget.record!.id != null) {
+      // 업데이트 모드
+      await viewModel.updateRecord(
+        recordId: widget.record!.id!,
+        userId: user.uid,
+        type: typeString,
+        date: _selectedDate,
+        title: _getTitle(),
+        imageUrl: _getImageUrl(),
+        content: _contentController.text,
+        rating: _rating,
+        metadata: metadata,
+      );
+    } else {
+      // 새로 작성 모드
+      await viewModel.saveRecord(
+        userId: user.uid,
+        type: typeString,
+        date: _selectedDate,
+        title: _getTitle(),
+        imageUrl: _getImageUrl(),
+        content: _contentController.text,
+        rating: _rating,
+        metadata: metadata,
+      );
+    }
 
     final state = ref.read(recordWriteViewModelProvider);
 
@@ -243,9 +348,9 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
     );
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('기록이 저장되었습니다.'),
-        duration: Duration(seconds: 2),
+      SnackBar(
+        content: Text(widget.record != null ? '기록이 수정되었습니다.' : '기록이 저장되었습니다.'),
+        duration: const Duration(seconds: 2),
       ),
     );
   }

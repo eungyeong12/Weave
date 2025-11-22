@@ -13,9 +13,13 @@ class FirebaseStorageDataSource {
     required String dateId,
     required int imageIndex,
     required XFile imageFile,
+    String? uniqueId, // 고유 ID (타임스탬프 등)
   }) async {
     try {
-      final fileName = '${userId}_${dateId}_$imageIndex.jpg';
+      // 고유 ID가 없으면 타임스탬프 사용
+      final unique =
+          uniqueId ?? DateTime.now().millisecondsSinceEpoch.toString();
+      final fileName = '${userId}_${dateId}_${unique}_$imageIndex.jpg';
       final ref = _storage.ref().child('diaries/$userId/$dateId/$fileName');
 
       UploadTask uploadTask;
@@ -46,8 +50,11 @@ class FirebaseStorageDataSource {
     required String userId,
     required String dateId,
     required List<XFile> imageFiles,
+    String? uniqueId, // 고유 ID (타임스탬프 등)
   }) async {
     final List<String> imageUrls = [];
+    // 고유 ID가 없으면 타임스탬프 사용 (모든 이미지가 같은 uniqueId를 공유)
+    final unique = uniqueId ?? DateTime.now().millisecondsSinceEpoch.toString();
 
     for (int i = 0; i < imageFiles.length; i++) {
       final url = await uploadImage(
@@ -55,6 +62,7 @@ class FirebaseStorageDataSource {
         dateId: dateId,
         imageIndex: i,
         imageFile: imageFiles[i],
+        uniqueId: unique,
       );
       imageUrls.add(url);
     }

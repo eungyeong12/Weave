@@ -50,6 +50,51 @@ class DiaryRepositoryImpl implements DiaryRepository {
   }
 
   @override
+  Future<Either<Failure, Diary>> updateDailyDiary({
+    required String diaryId,
+    required String userId,
+    required DateTime date,
+    required String content,
+    required List<String> existingImageUrls,
+    required List<String> newImageFilePaths,
+  }) async {
+    try {
+      // 1. 새로 추가한 이미지 파일 경로를 XFile로 변환
+      final newImageFiles = newImageFilePaths
+          .map((path) => XFile(path))
+          .toList();
+
+      // 2. 새로 추가한 이미지가 있으면 Storage에 업로드
+      List<String> newImageUrls = [];
+      if (newImageFiles.isNotEmpty) {
+        final dateId =
+            '${date.year}_${date.month.toString().padLeft(2, '0')}_${date.day.toString().padLeft(2, '0')}';
+        newImageUrls = await _storageDatasource.uploadImages(
+          userId: userId,
+          dateId: dateId,
+          imageFiles: newImageFiles,
+        );
+      }
+
+      // 3. 기존 이미지 URL과 새 이미지 URL 합치기
+      final allImageUrls = [...existingImageUrls, ...newImageUrls];
+
+      // 4. Firestore에 일기 업데이트
+      final diaryDto = await _firestoreDatasource.updateDailyDiary(
+        diaryId: diaryId,
+        userId: userId,
+        date: date,
+        content: content,
+        imageUrls: allImageUrls,
+      );
+
+      return Right(diaryDto);
+    } catch (e) {
+      return Left(Failure('일기 업데이트 중 오류가 발생했습니다: ${e.toString()}'));
+    }
+  }
+
+  @override
   Future<Either<Failure, List<Diary>>> getDiaries({
     required String userId,
     int? year,

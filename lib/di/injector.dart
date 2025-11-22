@@ -92,10 +92,16 @@ final saveDailyDiaryUseCaseProvider = Provider(
   (ref) => SaveDailyDiaryUseCase(ref.read(diaryRepositoryProvider)),
 );
 
+final updateDailyDiaryUseCaseProvider = Provider(
+  (ref) => UpdateDailyDiaryUseCase(ref.read(diaryRepositoryProvider)),
+);
+
 final dailyDiaryWriteViewModelProvider =
     StateNotifierProvider<DailyDiaryWriteViewModel, DailyDiaryWriteState>(
-      (ref) =>
-          DailyDiaryWriteViewModel(ref.read(saveDailyDiaryUseCaseProvider)),
+      (ref) => DailyDiaryWriteViewModel(
+        ref.read(saveDailyDiaryUseCaseProvider),
+        ref.read(updateDailyDiaryUseCaseProvider),
+      ),
     );
 
 // Book 관련 providers
@@ -157,9 +163,16 @@ final saveRecordUseCaseProvider = Provider(
   (ref) => SaveRecordUseCase(ref.read(recordRepositoryProvider)),
 );
 
+final updateRecordUseCaseProvider = Provider(
+  (ref) => UpdateRecordUseCase(ref.read(recordRepositoryProvider)),
+);
+
 final recordWriteViewModelProvider =
     StateNotifierProvider<RecordWriteViewModel, RecordWriteState>(
-      (ref) => RecordWriteViewModel(ref.read(saveRecordUseCaseProvider)),
+      (ref) => RecordWriteViewModel(
+        ref.read(saveRecordUseCaseProvider),
+        ref.read(updateRecordUseCaseProvider),
+      ),
     );
 
 final getRecordsUseCaseProvider = Provider(

@@ -44,6 +44,50 @@ class FirebaseFirestoreDatasource {
     }
   }
 
+  Future<DiaryDto> updateDailyDiary({
+    required String diaryId,
+    required String userId,
+    required DateTime date,
+    required String content,
+    required List<String> imageUrls,
+  }) async {
+    try {
+      final now = DateTime.now();
+
+      final diaryData = {
+        'userId': userId,
+        'date': Timestamp.fromDate(date),
+        'content': content,
+        'imageUrls': imageUrls,
+        'updatedAt': Timestamp.fromDate(now),
+      };
+
+      // 기존 문서 업데이트 (createdAt은 유지)
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('diaries')
+          .doc(diaryId)
+          .update(diaryData);
+
+      // 업데이트된 문서를 다시 읽어서 반환
+      final doc = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('diaries')
+          .doc(diaryId)
+          .get();
+
+      final data = doc.data();
+      if (data == null) {
+        throw Exception('업데이트된 문서 데이터를 읽을 수 없습니다.');
+      }
+      return DiaryDto.fromFirestore(data, doc.id);
+    } catch (e) {
+      throw Exception('일기 업데이트 실패: $e');
+    }
+  }
+
   Future<RecordDto> saveRecord({
     required String userId,
     required String type,
@@ -86,6 +130,58 @@ class FirebaseFirestoreDatasource {
       return RecordDto.fromFirestore(data, doc.id);
     } catch (e) {
       throw Exception('기록 저장 실패: $e');
+    }
+  }
+
+  Future<RecordDto> updateRecord({
+    required String recordId,
+    required String userId,
+    required String type,
+    required DateTime date,
+    required String title,
+    String? imageUrl,
+    required String content,
+    required double rating,
+    Map<String, dynamic>? metadata,
+  }) async {
+    try {
+      final now = DateTime.now();
+
+      final recordData = {
+        'userId': userId,
+        'type': type,
+        'date': Timestamp.fromDate(date),
+        'title': title,
+        'imageUrl': imageUrl,
+        'content': content,
+        'rating': rating,
+        'metadata': metadata,
+        'updatedAt': Timestamp.fromDate(now),
+      };
+
+      // 기존 문서 업데이트 (createdAt은 유지)
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('records')
+          .doc(recordId)
+          .update(recordData);
+
+      // 업데이트된 문서를 다시 읽어서 반환
+      final doc = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('records')
+          .doc(recordId)
+          .get();
+
+      final data = doc.data();
+      if (data == null) {
+        throw Exception('업데이트된 문서 데이터를 읽을 수 없습니다.');
+      }
+      return RecordDto.fromFirestore(data, doc.id);
+    } catch (e) {
+      throw Exception('기록 업데이트 실패: $e');
     }
   }
 

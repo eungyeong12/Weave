@@ -38,6 +38,36 @@ class RecordRepositoryImpl implements RecordRepository {
   }
 
   @override
+  Future<Either<Failure, Record>> updateRecord({
+    required String recordId,
+    required String userId,
+    required String type,
+    required DateTime date,
+    required String title,
+    String? imageUrl,
+    required String content,
+    required double rating,
+    Map<String, dynamic>? metadata,
+  }) async {
+    try {
+      final recordDto = await _firestoreDatasource.updateRecord(
+        recordId: recordId,
+        userId: userId,
+        type: type,
+        date: date,
+        title: title,
+        imageUrl: imageUrl,
+        content: content,
+        rating: rating,
+        metadata: metadata,
+      );
+      return Right(recordDto);
+    } catch (e) {
+      return Left(Failure('기록 업데이트 중 오류가 발생했습니다: ${e.toString()}'));
+    }
+  }
+
+  @override
   Future<Either<Failure, List<Record>>> getRecords({
     required String userId,
     int? year,

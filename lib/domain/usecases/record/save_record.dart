@@ -30,3 +30,33 @@ class SaveRecordUseCase {
     );
   }
 }
+
+class UpdateRecordUseCase {
+  final RecordRepository _repository;
+
+  UpdateRecordUseCase(this._repository);
+
+  Future<Either<Failure, Record>> call({
+    required String recordId,
+    required String userId,
+    required String type,
+    required DateTime date,
+    required String title,
+    String? imageUrl,
+    required String content,
+    required double rating,
+    Map<String, dynamic>? metadata,
+  }) async {
+    return await _repository.updateRecord(
+      recordId: recordId,
+      userId: userId,
+      type: type,
+      date: date,
+      title: title,
+      imageUrl: imageUrl,
+      content: content,
+      rating: rating,
+      metadata: metadata,
+    );
+  }
+}

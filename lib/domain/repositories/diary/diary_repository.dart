@@ -10,6 +10,15 @@ abstract class DiaryRepository {
     required List<String> imageFilePaths,
   });
 
+  Future<Either<Failure, Diary>> updateDailyDiary({
+    required String diaryId,
+    required String userId,
+    required DateTime date,
+    required String content,
+    required List<String> existingImageUrls,
+    required List<String> newImageFilePaths,
+  });
+
   Future<Either<Failure, List<Diary>>> getDiaries({
     required String userId,
     int? year,
