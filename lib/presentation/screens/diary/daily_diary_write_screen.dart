@@ -6,7 +6,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:weave/di/injector.dart';
 import 'package:weave/presentation/widgets/diary/image_list_section.dart';
 import 'package:weave/presentation/widgets/diary/diary_text_field.dart';
-import 'package:weave/presentation/widgets/diary/save_button.dart';
+import 'package:weave/presentation/widgets/record/save_button.dart';
 
 class DailyDiaryWriteScreen extends ConsumerStatefulWidget {
   final DateTime selectedDate;
@@ -236,9 +236,15 @@ class _DailyDiaryWriteScreenState extends ConsumerState<DailyDiaryWriteScreen> {
           ),
         ),
         actions: [
-          SaveButton(
-            onSave: _save,
-            isContentEmpty: _diaryController.text.trim().isEmpty,
+          Consumer(
+            builder: (context, ref, _) {
+              final state = ref.watch(dailyDiaryWriteViewModelProvider);
+              return SaveButton(
+                onSave: _save,
+                isContentEmpty: _diaryController.text.trim().isEmpty,
+                isLoading: state.isLoading,
+              );
+            },
           ),
         ],
       ),

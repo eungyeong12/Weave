@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:weave/data/models/diary/diary_dto.dart';
+import 'package:weave/data/models/record/record_dto.dart';
 
 class FirebaseFirestoreDatasource {
   final FirebaseFirestore _firestore;
@@ -40,6 +41,51 @@ class FirebaseFirestoreDatasource {
       return DiaryDto.fromFirestore(data, doc.id);
     } catch (e) {
       throw Exception('일기 저장 실패: $e');
+    }
+  }
+
+  Future<RecordDto> saveRecord({
+    required String userId,
+    required String type,
+    required DateTime date,
+    required String title,
+    String? imageUrl,
+    required String content,
+    required double rating,
+    Map<String, dynamic>? metadata,
+  }) async {
+    try {
+      final now = DateTime.now();
+
+      final recordData = {
+        'userId': userId,
+        'type': type,
+        'date': Timestamp.fromDate(date),
+        'title': title,
+        'imageUrl': imageUrl,
+        'content': content,
+        'rating': rating,
+        'metadata': metadata,
+        'createdAt': Timestamp.fromDate(now),
+        'updatedAt': Timestamp.fromDate(now),
+      };
+
+      // 사용자별 기록 컬렉션에 저장
+      final docRef = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('records')
+          .add(recordData);
+
+      // 저장된 문서를 다시 읽어서 반환
+      final doc = await docRef.get();
+      final data = doc.data();
+      if (data == null) {
+        throw Exception('저장된 문서 데이터를 읽을 수 없습니다.');
+      }
+      return RecordDto.fromFirestore(data, doc.id);
+    } catch (e) {
+      throw Exception('기록 저장 실패: $e');
     }
   }
 }

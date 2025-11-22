@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:weave/domain/entities/book/book.dart';
 import 'package:weave/domain/entities/movie/movie.dart';
 import 'package:weave/domain/entities/performance/performance.dart';
-import 'package:weave/presentation/widgets/diary/save_button.dart';
+import 'package:weave/presentation/widgets/record/save_button.dart';
 import 'package:weave/presentation/widgets/record/star_rating.dart';
+import 'package:weave/presentation/widgets/diary/diary_text_field.dart';
+import 'package:weave/di/injector.dart';
+import 'package:weave/presentation/screens/home/home_screen.dart';
 
 enum RecordType { book, movie, performance }
 
@@ -113,20 +116,114 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
     }
   }
 
-  void _save() {
-    // TODO: 기록 저장 로직 구현
+  Future<void> _save() async {
     if (_contentController.text.trim().isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('기록 내용을 입력해주세요.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
+    final authState = ref.read(authViewModelProvider);
+    final user = authState.user;
+
+    if (user == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('로그인이 필요합니다.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
+    // 타입 문자열 변환
+    String typeString;
+    switch (widget.type) {
+      case RecordType.book:
+        typeString = 'book';
+        break;
+      case RecordType.movie:
+        typeString = 'movie';
+        break;
+      case RecordType.performance:
+        typeString = 'performance';
+        break;
+    }
+
+    // 메타데이터 생성
+    Map<String, dynamic> metadata = {};
+    switch (widget.type) {
+      case RecordType.book:
+        final book = widget.book!;
+        metadata = {
+          'author': book.author,
+          'publisher': book.publisher,
+          'pubDate': book.pubDate,
+          'isbn': book.isbn,
+        };
+        break;
+      case RecordType.movie:
+        final movie = widget.movie!;
+        metadata = {
+          'releaseDate': movie.releaseDate,
+          'voteAverage': movie.voteAverage,
+          'id': movie.id,
+        };
+        break;
+      case RecordType.performance:
+        final performance = widget.performance!;
+        metadata = {
+          'venue': performance.venue,
+          'startDate': performance.startDate,
+          'endDate': performance.endDate,
+          'genre': performance.genre,
+          'id': performance.id,
+        };
+        break;
+    }
+
+    final viewModel = ref.read(recordWriteViewModelProvider.notifier);
+    final selectedDate = widget.selectedDate ?? DateTime.now();
+
+    await viewModel.saveRecord(
+      userId: user.uid,
+      type: typeString,
+      date: selectedDate,
+      title: _getTitle(),
+      imageUrl: _getImageUrl(),
+      content: _contentController.text,
+      rating: _rating,
+      metadata: metadata,
+    );
+
+    final state = ref.read(recordWriteViewModelProvider);
+
+    if (!mounted) return;
+
+    if (state.error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('기록 내용을 입력해주세요.'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(state.error!),
+          duration: const Duration(seconds: 2),
         ),
       );
       return;
     }
 
-    // 저장 성공 시
-    Navigator.pop(context);
+    // 저장 성공 시 홈 화면으로 이동
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
+      (route) => false,
+    );
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('기록이 저장되었습니다.'),
@@ -162,9 +259,15 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
           ),
         ),
         actions: [
-          SaveButton(
-            onSave: _save,
-            isContentEmpty: _contentController.text.trim().isEmpty,
+          Consumer(
+            builder: (context, ref, _) {
+              final state = ref.watch(recordWriteViewModelProvider);
+              return SaveButton(
+                onSave: _save,
+                isContentEmpty: _contentController.text.trim().isEmpty,
+                isLoading: state.isLoading,
+              );
+            },
           ),
         ],
       ),
@@ -279,35 +382,12 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
                   ),
                 ),
                 // 기록 내용 입력 영역
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Container(
-                    constraints: const BoxConstraints(minHeight: 400),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF6F9F2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: TextField(
-                      controller: _contentController,
-                      focusNode: _contentFocusNode,
-                      minLines: null,
-                      maxLines: null,
-                      expands: false,
-                      textAlignVertical: TextAlignVertical.top,
-                      onChanged: (_) => setState(() {}),
-                      decoration: InputDecoration(
-                        hintText: '어떤 생각이 들었나요?',
-                        hintStyle: TextStyle(color: Colors.grey.shade400),
-                        filled: true,
-                        fillColor: Colors.transparent,
-                        hoverColor: Colors.transparent,
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        contentPadding: const EdgeInsets.all(16),
-                      ),
-                    ),
-                  ),
+                DiaryTextField(
+                  controller: _contentController,
+                  focusNode: _contentFocusNode,
+                  onChanged: (_) => setState(() {}),
+                  minHeight: 400,
+                  hintText: '어떤 생각이 들었나요?',
                 ),
               ],
             ),

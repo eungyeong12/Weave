@@ -30,6 +30,10 @@ import 'package:weave/data/repositories/performance/performance_repository_impl.
 import 'package:weave/domain/repositories/performance/performance_repository.dart';
 import 'package:weave/domain/usecases/performance/search_performances.dart';
 import 'package:weave/presentation/viewmodels/performance/performance_search_viewmodel.dart';
+import 'package:weave/data/repositories/record/record_repository_impl.dart';
+import 'package:weave/domain/repositories/record/record_repository.dart';
+import 'package:weave/domain/usecases/record/save_record.dart';
+import 'package:weave/presentation/viewmodels/record/record_write_viewmodel.dart';
 
 final firebaseAuthProvider = Provider((ref) => FirebaseAuth.instance);
 
@@ -139,4 +143,18 @@ final performanceSearchViewModelProvider =
       (ref) => PerformanceSearchViewModel(
         ref.read(searchPerformancesUseCaseProvider),
       ),
+    );
+
+// Record 관련 providers
+final recordRepositoryProvider = Provider<RecordRepository>(
+  (ref) => RecordRepositoryImpl(ref.read(firebaseFirestoreDatasourceProvider)),
+);
+
+final saveRecordUseCaseProvider = Provider(
+  (ref) => SaveRecordUseCase(ref.read(recordRepositoryProvider)),
+);
+
+final recordWriteViewModelProvider =
+    StateNotifierProvider<RecordWriteViewModel, RecordWriteState>(
+      (ref) => RecordWriteViewModel(ref.read(saveRecordUseCaseProvider)),
     );

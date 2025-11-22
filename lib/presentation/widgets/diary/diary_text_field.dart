@@ -4,12 +4,16 @@ class DiaryTextField extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final ValueChanged<String>? onChanged;
+  final double minHeight;
+  final String hintText;
 
   const DiaryTextField({
     super.key,
     required this.controller,
     required this.focusNode,
     this.onChanged,
+    this.minHeight = 540,
+    this.hintText = '오늘 하루를 기록해보세요',
   });
 
   @override
@@ -17,7 +21,7 @@ class DiaryTextField extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
-        constraints: const BoxConstraints(minHeight: 540),
+        constraints: BoxConstraints(minHeight: minHeight),
         decoration: BoxDecoration(
           color: const Color(0xFFF6F9F2),
           borderRadius: BorderRadius.circular(12),
@@ -29,10 +33,11 @@ class DiaryTextField extends StatelessWidget {
           maxLines: null,
           expands: false,
           textAlignVertical: TextAlignVertical.top,
+          style: const TextStyle(fontSize: 14),
           onChanged: onChanged,
           decoration: InputDecoration(
-            hintText: '오늘 하루를 기록해보세요',
-            hintStyle: TextStyle(color: Colors.grey.shade400),
+            hintText: hintText,
+            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
             filled: true,
             fillColor: Colors.transparent,
             hoverColor: Colors.transparent,

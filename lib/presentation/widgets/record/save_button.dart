@@ -1,26 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:weave/di/injector.dart';
 
-class SaveButton extends ConsumerWidget {
+class SaveButton extends StatelessWidget {
   final VoidCallback onSave;
   final bool isContentEmpty;
+  final bool isLoading;
 
   const SaveButton({
     super.key,
     required this.onSave,
     required this.isContentEmpty,
+    this.isLoading = false,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(dailyDiaryWriteViewModelProvider);
-    final isDisabled = state.isLoading || isContentEmpty;
+  Widget build(BuildContext context) {
+    final isDisabled = isLoading || isContentEmpty;
 
     return TextButton(
       onPressed: isDisabled ? null : onSave,
       style: TextButton.styleFrom(splashFactory: NoSplash.splashFactory),
-      child: state.isLoading
+      child: isLoading
           ? const SizedBox(
               width: 16,
               height: 16,
