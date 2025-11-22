@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:weave/domain/entities/record/record.dart';
 import 'package:weave/domain/entities/diary/diary.dart';
+import 'package:weave/presentation/screens/diary/diary_detail_screen.dart';
 
 class DatePostsBottomSheet {
   static void show(
@@ -348,97 +349,108 @@ class _DiaryItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        children: [
-          // 이미지 영역
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(12),
-              bottomLeft: Radius.circular(12),
-            ),
-            child: diary.imageUrls.isNotEmpty
-                ? Image.network(
-                    getProxiedImageUrl(diary.imageUrls.first),
-                    width: 92,
-                    height: 92,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: 92,
-                        height: 92,
-                        color: Colors.grey.shade200,
-                        child: Icon(
-                          Icons.book,
-                          color: Colors.grey.shade400,
-                          size: 32,
-                        ),
-                      );
-                    },
-                  )
-                : Container(
-                    width: 92,
-                    height: 92,
-                    color: Colors.grey.shade200,
-                    child: Icon(
-                      Icons.book,
-                      color: Colors.grey.shade400,
-                      size: 32,
-                    ),
-                  ),
+    return GestureDetector(
+      onTap: () {
+        Navigator.pop(context);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DiaryDetailScreen(diary: diary),
           ),
-          // 정보 영역
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.book, size: 10, color: Colors.grey.shade600),
-                      const SizedBox(width: 4),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Row(
+          children: [
+            // 이미지 영역
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                bottomLeft: Radius.circular(12),
+              ),
+              child: diary.imageUrls.isNotEmpty
+                  ? Image.network(
+                      getProxiedImageUrl(diary.imageUrls.first),
+                      width: 92,
+                      height: 92,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 92,
+                          height: 92,
+                          color: Colors.grey.shade200,
+                          child: Icon(
+                            Icons.book,
+                            color: Colors.grey.shade400,
+                            size: 32,
+                          ),
+                        );
+                      },
+                    )
+                  : Container(
+                      width: 92,
+                      height: 92,
+                      color: Colors.grey.shade200,
+                      child: Icon(
+                        Icons.book,
+                        color: Colors.grey.shade400,
+                        size: 32,
+                      ),
+                    ),
+            ),
+            // 정보 영역
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.book, size: 10, color: Colors.grey.shade600),
+                        const SizedBox(width: 4),
+                        Text(
+                          '일상',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      diary.content,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (diary.imageUrls.length > 1) ...[
+                      const SizedBox(height: 2),
                       Text(
-                        '일상',
+                        '+${diary.imageUrls.length - 1}장',
                         style: TextStyle(
                           fontSize: 10,
                           color: Colors.grey.shade600,
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    diary.content,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (diary.imageUrls.length > 1) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      '+${diary.imageUrls.length - 1}장',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
                   ],
-                ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
