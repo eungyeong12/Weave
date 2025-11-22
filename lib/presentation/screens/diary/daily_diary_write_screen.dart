@@ -7,6 +7,7 @@ import 'package:weave/di/injector.dart';
 import 'package:weave/presentation/widgets/diary/image_list_section.dart';
 import 'package:weave/presentation/widgets/diary/diary_text_field.dart';
 import 'package:weave/presentation/widgets/record/save_button.dart';
+import 'package:weave/presentation/screens/home/home_screen.dart';
 
 class DailyDiaryWriteScreen extends ConsumerStatefulWidget {
   final DateTime selectedDate;
@@ -197,7 +198,12 @@ class _DailyDiaryWriteScreenState extends ConsumerState<DailyDiaryWriteScreen> {
         ),
       );
     } else {
-      Navigator.pop(context);
+      // 저장 성공 시 홈 화면으로 이동
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        (route) => false,
+      );
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('일기가 저장되었습니다.'),

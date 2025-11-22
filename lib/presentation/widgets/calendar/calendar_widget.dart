@@ -1,19 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:weave/domain/entities/record/record.dart';
+import 'package:weave/domain/entities/diary/diary.dart';
+import 'package:weave/presentation/widgets/gallery/month_picker_bottom_sheet.dart';
 
 class CalendarWidget extends StatelessWidget {
   final DateTime currentMonth;
   final DateTime? selectedDate;
   final Function(DateTime) onDateSelected;
-  final VoidCallback onPreviousMonth;
-  final VoidCallback onNextMonth;
+  final Function(DateTime) onMonthChanged;
+  final List<Record> records;
+  final List<Diary> diaries;
 
   const CalendarWidget({
     super.key,
     required this.currentMonth,
     this.selectedDate,
     required this.onDateSelected,
-    required this.onPreviousMonth,
-    required this.onNextMonth,
+    required this.onMonthChanged,
+    this.records = const [],
+    this.diaries = const [],
   });
 
   List<DateTime> _getDaysInMonth(DateTime month) {
@@ -61,163 +67,227 @@ class CalendarWidget extends StatelessWidget {
     return date.year == currentMonth.year && date.month == currentMonth.month;
   }
 
-  bool _isSelected(
-    DateTime date,
-    DateTime? selectedDate,
-    DateTime currentMonth,
-  ) {
-    if (selectedDate == null) return false;
-    // 선택된 날짜가 현재 달에 속하지 않으면 선택되지 않은 것으로 처리
-    if (selectedDate.year != currentMonth.year ||
-        selectedDate.month != currentMonth.month) {
-      return false;
+  String? _getLatestImageUrl(DateTime date) {
+    // 해당 날짜의 모든 기록과 일기 수집
+    final dayRecords = records.where((record) {
+      final recordDate = record.date;
+      return recordDate.year == date.year &&
+          recordDate.month == date.month &&
+          recordDate.day == date.day &&
+          record.imageUrl != null &&
+          record.imageUrl!.isNotEmpty;
+    }).toList();
+
+    final dayDiaries = diaries.where((diary) {
+      final diaryDate = diary.date;
+      return diaryDate.year == date.year &&
+          diaryDate.month == date.month &&
+          diaryDate.day == date.day &&
+          diary.imageUrls.isNotEmpty;
+    }).toList();
+
+    // 모든 항목을 하나의 리스트로 합치고 createdAt 기준으로 정렬
+    final allItems = <({String imageUrl, DateTime createdAt})>[];
+
+    // Record 추가
+    for (final record in dayRecords) {
+      allItems.add((imageUrl: record.imageUrl!, createdAt: record.createdAt));
     }
-    return date.year == selectedDate.year &&
-        date.month == selectedDate.month &&
-        date.day == selectedDate.day;
+
+    // Diary 추가 (첫 번째 이미지만 사용)
+    for (final diary in dayDiaries) {
+      if (diary.imageUrls.isNotEmpty) {
+        allItems.add((
+          imageUrl: diary.imageUrls.first,
+          createdAt: diary.createdAt,
+        ));
+      }
+    }
+
+    // createdAt 기준으로 정렬 (최신순)
+    allItems.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+    // 가장 최근 항목의 이미지 URL 반환
+    return allItems.isNotEmpty ? allItems.first.imageUrl : null;
+  }
+
+  String _getProxiedImageUrl(String originalUrl) {
+    try {
+      final projectId = Firebase.app().options.projectId;
+      final encodedUrl = Uri.encodeComponent(originalUrl);
+      return 'https://us-central1-$projectId.cloudfunctions.net/proxyImage?url=$encodedUrl';
+    } catch (e) {
+      return originalUrl;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // 사용 가능한 높이 계산 (헤더와 요일 헤더 제외)
-        final availableHeight = constraints.maxHeight;
-        final headerHeight = 48.0; // 헤더 높이
-        final weekdayHeaderHeight = 24.0; // 요일 헤더 높이
-        final spacing = 8.0; // 헤더와 그리드 사이 간격
-        final gridHeight =
-            availableHeight - headerHeight - weekdayHeaderHeight - spacing;
-        // 6주 + 마지막 주 아래 공간까지 포함하여 7개의 동일한 공간으로 나눔
-        final cellHeight = gridHeight / 7;
-        final cellWidth = (constraints.maxWidth - 16) / 7; // 7열, 좌우 8dp씩
+        // 셀 너비 계산 (7열, 좌우 8dp씩 패딩)
+        final cellWidth = (constraints.maxWidth - 16) / 7;
+        // 셀 높이 계산 (16:9 비율 유지: 높이:너비 = 16:9)
+        final cellHeight = cellWidth * 16 / 9;
 
-        return GestureDetector(
-          onHorizontalDragEnd: (details) {
-            // 스와이프 속도와 거리를 고려하여 달력 이동
-            const sensitivity = 50.0; // 최소 스와이프 거리
-            if (details.primaryVelocity != null) {
-              if (details.primaryVelocity! > sensitivity) {
-                // 오른쪽으로 스와이프 (이전 달)
-                onPreviousMonth();
-              } else if (details.primaryVelocity! < -sensitivity) {
-                // 왼쪽으로 스와이프 (다음 달)
-                onNextMonth();
-              }
-            }
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Column(
-              children: [
-                const SizedBox(height: 16),
-                // 캘린더 헤더 (월/년도 및 네비게이션)
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: onPreviousMonth,
-                      child: const Icon(Icons.chevron_left),
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Column(
+            children: [
+              const SizedBox(height: 16),
+              // 캘린더 헤더 (월/년도 및 네비게이션)
+              Row(
+                children: [
+                  // 이전 달로 이동
+                  GestureDetector(
+                    onTap: () {
+                      final previousMonth = DateTime(
+                        currentMonth.year,
+                        currentMonth.month - 1,
+                      );
+                      onMonthChanged(previousMonth);
+                    },
+                    child: const Icon(Icons.chevron_left),
+                  ),
+                  const SizedBox(width: 4),
+                  // 년도/월 텍스트 (클릭 시 다이얼로그 표시)
+                  GestureDetector(
+                    onTap: () async {
+                      final DateTime? picked =
+                          await MonthPickerBottomSheet.show(
+                            context,
+                            currentMonth,
+                          );
+                      if (picked != null) {
+                        onMonthChanged(picked);
+                      }
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${currentMonth.year}년 ${currentMonth.month}월',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${currentMonth.year}년 ${currentMonth.month}월',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    GestureDetector(
-                      onTap: onNextMonth,
-                      child: const Icon(Icons.chevron_right),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                // 요일 헤더
-                Row(
-                  children: ['일', '월', '화', '수', '목', '금', '토']
-                      .map(
-                        (day) => SizedBox(
-                          width: cellWidth,
-                          child: Center(
-                            child: Text(
-                              day,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey,
-                              ),
+                  ),
+                  const SizedBox(width: 4),
+                  // 다음 달로 이동
+                  GestureDetector(
+                    onTap: () {
+                      final nextMonth = DateTime(
+                        currentMonth.year,
+                        currentMonth.month + 1,
+                      );
+                      onMonthChanged(nextMonth);
+                    },
+                    child: const Icon(Icons.chevron_right),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // 요일 헤더
+              Row(
+                children: ['일', '월', '화', '수', '목', '금', '토']
+                    .map(
+                      (day) => SizedBox(
+                        width: cellWidth,
+                        child: Center(
+                          child: Text(
+                            day,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey,
                             ),
                           ),
                         ),
-                      )
-                      .toList(),
-                ),
-                const SizedBox(height: 8),
-                // 캘린더 그리드
-                Expanded(
-                  child: GridView.builder(
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 7,
-                      childAspectRatio: cellWidth / cellHeight,
-                    ),
-                    itemCount: 42,
-                    itemBuilder: (context, index) {
-                      final days = _getDaysInMonth(currentMonth);
-                      final date = days[index];
-                      final isCurrentMonth = _isCurrentMonth(
-                        date,
-                        currentMonth,
-                      );
-                      final isSelected = _isSelected(
-                        date,
-                        selectedDate,
-                        currentMonth,
-                      );
+                      ),
+                    )
+                    .toList(),
+              ),
+              const SizedBox(height: 8),
+              // 캘린더 그리드
+              Expanded(
+                child: GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 7,
+                    childAspectRatio: cellWidth / cellHeight,
+                  ),
+                  itemCount: 42,
+                  itemBuilder: (context, index) {
+                    final days = _getDaysInMonth(currentMonth);
+                    final date = days[index];
+                    final isCurrentMonth = _isCurrentMonth(date, currentMonth);
+                    final imageUrl = _getLatestImageUrl(date);
 
-                      return GestureDetector(
-                        onTap: () => onDateSelected(date),
-                        child: Container(
-                          margin: const EdgeInsets.all(2),
-                          child: Align(
-                            alignment: Alignment.topCenter,
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? Colors.green.shade600
-                                      : Colors.transparent,
-                                  shape: BoxShape.circle,
+                    return GestureDetector(
+                      onTap: () => onDateSelected(date),
+                      child: Container(
+                        margin: const EdgeInsets.all(2),
+                        decoration: imageUrl != null && isCurrentMonth
+                            ? BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                              )
+                            : null,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            // 배경 이미지
+                            if (imageUrl != null && isCurrentMonth)
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  _getProxiedImageUrl(imageUrl),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const SizedBox.shrink();
+                                  },
                                 ),
-                                child: Center(
-                                  child: Text(
-                                    '${date.day}',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.normal,
-                                      color: isSelected
-                                          ? Colors.white
-                                          : !isCurrentMonth
-                                          ? Colors.grey.shade300
-                                          : Colors.black87,
-                                    ),
+                              ),
+                            // 날짜 텍스트
+                            Align(
+                              alignment: Alignment.topCenter,
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  '${date.day}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.normal,
+                                    color: !isCurrentMonth
+                                        ? Colors.grey.shade300
+                                        : (imageUrl != null && isCurrentMonth
+                                              ? Colors.white
+                                              : Colors.black87),
+                                    shadows: imageUrl != null && isCurrentMonth
+                                        ? [
+                                            Shadow(
+                                              offset: const Offset(0, 1),
+                                              blurRadius: 3,
+                                              color: Colors.black.withOpacity(
+                                                0.5,
+                                              ),
+                                            ),
+                                          ]
+                                        : null,
                                   ),
                                 ),
                               ),
                             ),
-                          ),
+                          ],
                         ),
-                      );
-                    },
-                  ),
+                      ),
+                    );
+                  },
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },

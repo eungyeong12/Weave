@@ -88,4 +88,72 @@ class FirebaseFirestoreDatasource {
       throw Exception('기록 저장 실패: $e');
     }
   }
+
+  Future<List<RecordDto>> getRecords({
+    required String userId,
+    int? year,
+    int? month,
+  }) async {
+    try {
+      Query query = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('records');
+
+      // 년도와 월이 지정된 경우 날짜 범위로 필터링
+      if (year != null && month != null) {
+        final startDate = DateTime(year, month, 1);
+        final endDate = DateTime(year, month + 1, 0, 23, 59, 59);
+        query = query
+            .where(
+              'date',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startDate),
+            )
+            .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endDate));
+      }
+
+      final querySnapshot = await query.orderBy('date', descending: true).get();
+
+      return querySnapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return RecordDto.fromFirestore(data, doc.id);
+      }).toList();
+    } catch (e) {
+      throw Exception('기록 조회 실패: $e');
+    }
+  }
+
+  Future<List<DiaryDto>> getDiaries({
+    required String userId,
+    int? year,
+    int? month,
+  }) async {
+    try {
+      Query query = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('diaries');
+
+      // 년도와 월이 지정된 경우 날짜 범위로 필터링
+      if (year != null && month != null) {
+        final startDate = DateTime(year, month, 1);
+        final endDate = DateTime(year, month + 1, 0, 23, 59, 59);
+        query = query
+            .where(
+              'date',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startDate),
+            )
+            .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endDate));
+      }
+
+      final querySnapshot = await query.orderBy('date', descending: true).get();
+
+      return querySnapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return DiaryDto.fromFirestore(data, doc.id);
+      }).toList();
+    } catch (e) {
+      throw Exception('일기 조회 실패: $e');
+    }
+  }
 }

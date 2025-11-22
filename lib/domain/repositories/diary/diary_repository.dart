@@ -9,4 +9,10 @@ abstract class DiaryRepository {
     required String content,
     required List<String> imageFilePaths,
   });
+
+  Future<Either<Failure, List<Diary>>> getDiaries({
+    required String userId,
+    int? year,
+    int? month,
+  });
 }

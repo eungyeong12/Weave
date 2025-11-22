@@ -13,4 +13,10 @@ abstract class RecordRepository {
     required double rating,
     Map<String, dynamic>? metadata,
   });
+
+  Future<Either<Failure, List<Record>>> getRecords({
+    required String userId,
+    int? year,
+    int? month,
+  });
 }

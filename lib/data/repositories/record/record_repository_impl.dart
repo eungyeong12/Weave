@@ -36,4 +36,22 @@ class RecordRepositoryImpl implements RecordRepository {
       return Left(Failure('기록 저장 중 오류가 발생했습니다: ${e.toString()}'));
     }
   }
+
+  @override
+  Future<Either<Failure, List<Record>>> getRecords({
+    required String userId,
+    int? year,
+    int? month,
+  }) async {
+    try {
+      final records = await _firestoreDatasource.getRecords(
+        userId: userId,
+        year: year,
+        month: month,
+      );
+      return Right(records);
+    } catch (e) {
+      return Left(Failure('기록 조회 중 오류가 발생했습니다: ${e.toString()}'));
+    }
+  }
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -60,7 +62,28 @@ class _MyAppState extends ConsumerState<MyApp> {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('ko', 'KR'), Locale('en', 'US')],
+      locale: const Locale('ko', 'KR'),
       initialRoute: initialRoute,
+      builder: (context, child) {
+        if (kIsWeb) {
+          return Container(
+            color: const Color.fromARGB(255, 240, 240, 240).withOpacity(0.5),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 460),
+                child: child!,
+              ),
+            ),
+          );
+        }
+        return child!;
+      },
       routes: {
         '/': (context) => const LoginScreen(),
         '/login': (context) => const LoginScreen(),

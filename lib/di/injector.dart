@@ -33,7 +33,10 @@ import 'package:weave/presentation/viewmodels/performance/performance_search_vie
 import 'package:weave/data/repositories/record/record_repository_impl.dart';
 import 'package:weave/domain/repositories/record/record_repository.dart';
 import 'package:weave/domain/usecases/record/save_record.dart';
+import 'package:weave/domain/usecases/record/get_records.dart';
+import 'package:weave/domain/usecases/diary/get_diaries.dart';
 import 'package:weave/presentation/viewmodels/record/record_write_viewmodel.dart';
+import 'package:weave/presentation/viewmodels/home/home_viewmodel.dart';
 
 final firebaseAuthProvider = Provider((ref) => FirebaseAuth.instance);
 
@@ -158,3 +161,18 @@ final recordWriteViewModelProvider =
     StateNotifierProvider<RecordWriteViewModel, RecordWriteState>(
       (ref) => RecordWriteViewModel(ref.read(saveRecordUseCaseProvider)),
     );
+
+final getRecordsUseCaseProvider = Provider(
+  (ref) => GetRecordsUseCase(ref.read(recordRepositoryProvider)),
+);
+
+final getDiariesUseCaseProvider = Provider(
+  (ref) => GetDiariesUseCase(ref.read(diaryRepositoryProvider)),
+);
+
+final homeViewModelProvider = StateNotifierProvider<HomeViewModel, HomeState>(
+  (ref) => HomeViewModel(
+    ref.read(getRecordsUseCaseProvider),
+    ref.read(getDiariesUseCaseProvider),
+  ),
+);

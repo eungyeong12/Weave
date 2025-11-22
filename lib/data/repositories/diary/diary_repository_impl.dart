@@ -48,4 +48,22 @@ class DiaryRepositoryImpl implements DiaryRepository {
       return Left(Failure('일기 저장 중 오류가 발생했습니다: ${e.toString()}'));
     }
   }
+
+  @override
+  Future<Either<Failure, List<Diary>>> getDiaries({
+    required String userId,
+    int? year,
+    int? month,
+  }) async {
+    try {
+      final diaries = await _firestoreDatasource.getDiaries(
+        userId: userId,
+        year: year,
+        month: month,
+      );
+      return Right(diaries);
+    } catch (e) {
+      return Left(Failure('일기 조회 중 오류가 발생했습니다: ${e.toString()}'));
+    }
+  }
 }

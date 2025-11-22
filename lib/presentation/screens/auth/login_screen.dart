@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:weave/presentation/widgets/auth/email_password_form.dart';
 import 'package:weave/presentation/viewmodels/auth/auth_viewmodel.dart';
 import 'package:weave/di/injector.dart';
+import 'package:weave/presentation/screens/home/home_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -26,7 +27,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         // 빌드가 완료된 후에 네비게이션 실행
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
-            Navigator.of(context).pushReplacementNamed('/home');
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+              (route) => false,
+            );
           }
         });
         return;
