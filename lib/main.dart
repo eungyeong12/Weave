@@ -57,6 +57,7 @@ class _MyAppState extends ConsumerState<MyApp> {
 
     return MaterialApp(
       title: 'Weave',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
@@ -75,7 +76,7 @@ class _MyAppState extends ConsumerState<MyApp> {
             color: const Color.fromARGB(255, 240, 240, 240).withOpacity(0.5),
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 380),
+                constraints: const BoxConstraints(maxWidth: 420),
                 child: child!,
               ),
             ),

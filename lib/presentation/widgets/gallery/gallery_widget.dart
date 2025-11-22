@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:weave/domain/entities/record/record.dart';
 import 'package:weave/domain/entities/diary/diary.dart';
@@ -185,135 +186,125 @@ class _GalleryWidgetState extends State<GalleryWidget> {
       },
       child: Scaffold(
         backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          automaticallyImplyLeading: false,
+          title: GestureDetector(
+            onTap: _selectMonth,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(width: 8),
+                Text(
+                  '${widget.currentMonth.year}년 ${widget.currentMonth.month}월',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.arrow_drop_down,
+                  color: Colors.grey.shade600,
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            // 설정 아이콘
+            IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.settings, color: Colors.grey),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+            const SizedBox(width: 8),
+            if (kIsWeb) const SizedBox(width: 8),
+          ],
+        ),
         body: GestureDetector(
           onTap: () {
             // 검색바 이외의 공간을 클릭하면 포커스 해제
             FocusScope.of(context).unfocus();
           },
-          child: SafeArea(
-            child: Column(
-              children: [
-                const SizedBox(height: 8),
-                // 년도와 월 헤더
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                  child: Row(
-                    children: [
-                      GestureDetector(
-                        onTap: _selectMonth,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+          child: Column(
+            children: [
+              // 검색바
+              SearchTextField(
+                controller: _searchController,
+                focusNode: _searchFocusNode,
+                onSubmitted: _onSearchSubmitted,
+                onClear: _onSearchClear,
+                hintText: '검색',
+              ),
+              // 갤러리 그리드
+              Expanded(
+                child:
+                    widget.isLoading &&
+                        widget.records.isEmpty &&
+                        widget.diaries.isEmpty
+                    ? const Center(child: CircularProgressIndicator())
+                    : _allItems.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              '${widget.currentMonth.year}년 ${widget.currentMonth.month}월',
-                              style: const TextStyle(
+                              _searchQuery.isEmpty ? '기록이 없습니다' : '검색 결과가 없습니다',
+                              style: TextStyle(
                                 fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
+                                color: Colors.grey.shade600,
                               ),
-                            ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.arrow_drop_down,
-                              color: Colors.grey.shade600,
-                              size: 20,
                             ),
                           ],
                         ),
-                      ),
-                      const Spacer(),
-                      if (widget.isLoading)
-                        const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      const SizedBox(width: 8),
-                      // 설정 아이콘
-                      IconButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const SettingsScreen(),
-                            ),
-                          );
+                      )
+                    : RefreshIndicator(
+                        onRefresh: () async {
+                          widget.onRefresh();
                         },
-                        icon: const Icon(Icons.settings, color: Colors.grey),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                    ],
-                  ),
-                ),
-                // 검색바
-                SearchTextField(
-                  controller: _searchController,
-                  focusNode: _searchFocusNode,
-                  onSubmitted: _onSearchSubmitted,
-                  onClear: _onSearchClear,
-                  hintText: '검색',
-                ),
-                // 갤러리 그리드
-                Expanded(
-                  child:
-                      widget.isLoading &&
-                          widget.records.isEmpty &&
-                          widget.diaries.isEmpty
-                      ? const Center(child: CircularProgressIndicator())
-                      : _allItems.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                _searchQuery.isEmpty
-                                    ? '기록이 없습니다'
-                                    : '검색 결과가 없습니다',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey.shade600,
-                                ),
+                        child: GridView.builder(
+                          padding: const EdgeInsets.all(16),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 12,
+                                mainAxisSpacing: 12,
+                                childAspectRatio: 0.75,
                               ),
-                            ],
-                          ),
-                        )
-                      : RefreshIndicator(
-                          onRefresh: () async {
-                            widget.onRefresh();
+                          itemCount: _allItems.length,
+                          itemBuilder: (context, index) {
+                            final item = _allItems[index];
+                            if (item is Record) {
+                              return _GalleryItem(
+                                record: item,
+                                getProxiedImageUrl: _getProxiedImageUrl,
+                                getTypeIcon: _getTypeIcon,
+                                formatDate: _formatDate,
+                              );
+                            } else {
+                              return _DiaryGalleryItem(
+                                diary: item as Diary,
+                                getProxiedImageUrl: _getProxiedImageUrl,
+                                formatDate: _formatDate,
+                              );
+                            }
                           },
-                          child: GridView.builder(
-                            padding: const EdgeInsets.all(16),
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  crossAxisSpacing: 12,
-                                  mainAxisSpacing: 12,
-                                  childAspectRatio: 0.75,
-                                ),
-                            itemCount: _allItems.length,
-                            itemBuilder: (context, index) {
-                              final item = _allItems[index];
-                              if (item is Record) {
-                                return _GalleryItem(
-                                  record: item,
-                                  getProxiedImageUrl: _getProxiedImageUrl,
-                                  getTypeIcon: _getTypeIcon,
-                                  formatDate: _formatDate,
-                                );
-                              } else {
-                                return _DiaryGalleryItem(
-                                  diary: item as Diary,
-                                  getProxiedImageUrl: _getProxiedImageUrl,
-                                  formatDate: _formatDate,
-                                );
-                              }
-                            },
-                          ),
                         ),
-                ),
-              ],
-            ),
+                      ),
+              ),
+            ],
           ),
         ),
       ),

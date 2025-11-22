@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:weave/domain/entities/record/record.dart';
 import 'package:weave/domain/entities/diary/diary.dart';
@@ -138,204 +139,215 @@ class CalendarWidget extends StatelessWidget {
         // 셀 높이 계산 (16:9 비율 유지: 높이:너비 = 16:9)
         final cellHeight = cellWidth * 16 / 9;
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Column(
-            children: [
-              const SizedBox(height: 8),
-              // 캘린더 헤더 (월/년도 및 네비게이션)
-              Row(
-                children: [
-                  // 이전 달로 이동
-                  GestureDetector(
-                    onTap: () {
-                      final previousMonth = DateTime(
-                        currentMonth.year,
-                        currentMonth.month - 1,
-                      );
-                      onMonthChanged(previousMonth);
-                    },
-                    child: const Icon(Icons.chevron_left),
-                  ),
-                  const SizedBox(width: 4),
-                  // 년도/월 텍스트 (클릭 시 다이얼로그 표시)
-                  GestureDetector(
-                    onTap: () async {
-                      final DateTime? picked =
-                          await MonthPickerBottomSheet.show(
-                            context,
-                            currentMonth,
-                          );
-                      if (picked != null) {
-                        onMonthChanged(picked);
-                      }
-                    },
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '${currentMonth.year}년 ${currentMonth.month}월',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+        return Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            automaticallyImplyLeading: false,
+            title: Row(
+              children: [
+                // 이전 달로 이동
+                GestureDetector(
+                  onTap: () {
+                    final previousMonth = DateTime(
+                      currentMonth.year,
+                      currentMonth.month - 1,
+                    );
+                    onMonthChanged(previousMonth);
+                  },
+                  child: const Icon(Icons.chevron_left, color: Colors.black),
+                ),
+                const SizedBox(width: 4),
+                // 년도/월 텍스트 (클릭 시 다이얼로그 표시)
+                GestureDetector(
+                  onTap: () async {
+                    final DateTime? picked = await MonthPickerBottomSheet.show(
+                      context,
+                      currentMonth,
+                    );
+                    if (picked != null) {
+                      onMonthChanged(picked);
+                    }
+                  },
+                  child: Text(
+                    '${currentMonth.year}년 ${currentMonth.month}월',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  // 다음 달로 이동
-                  GestureDetector(
-                    onTap: () {
-                      final nextMonth = DateTime(
-                        currentMonth.year,
-                        currentMonth.month + 1,
-                      );
-                      onMonthChanged(nextMonth);
-                    },
-                    child: const Icon(Icons.chevron_right),
-                  ),
-                  const Spacer(),
-                  // 설정 아이콘
-                  IconButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SettingsScreen(),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.settings, color: Colors.grey),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
+                ),
+                const SizedBox(width: 4),
+                // 다음 달로 이동
+                GestureDetector(
+                  onTap: () {
+                    final nextMonth = DateTime(
+                      currentMonth.year,
+                      currentMonth.month + 1,
+                    );
+                    onMonthChanged(nextMonth);
+                  },
+                  child: const Icon(Icons.chevron_right, color: Colors.black),
+                ),
+              ],
+            ),
+            actions: [
+              // 설정 아이콘
+              IconButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SettingsScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.settings, color: Colors.grey),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
               ),
-              const SizedBox(height: 8),
-              // 요일 헤더
-              Row(
-                children: ['일', '월', '화', '수', '목', '금', '토']
-                    .map(
-                      (day) => SizedBox(
-                        width: cellWidth,
-                        child: Center(
-                          child: Text(
-                            day,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey,
+              const SizedBox(width: 8),
+              if (kIsWeb) const SizedBox(width: 8),
+            ],
+          ),
+          body: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Column(
+              children: [
+                // 요일 헤더
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: ['일', '월', '화', '수', '목', '금', '토']
+                      .map(
+                        (day) => Expanded(
+                          child: Center(
+                            child: Text(
+                              day,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    )
-                    .toList(),
-              ),
-              const SizedBox(height: 8),
-              // 캘린더 그리드
-              Expanded(
-                child: GridView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 7,
-                    childAspectRatio: cellWidth / cellHeight,
-                  ),
-                  itemCount: 42,
-                  itemBuilder: (context, index) {
-                    final days = _getDaysInMonth(currentMonth);
-                    final date = days[index];
-                    final isCurrentMonth = _isCurrentMonth(date, currentMonth);
-                    final isToday = _isToday(date);
-                    final imageUrl = _getLatestImageUrl(date);
+                      )
+                      .toList(),
+                ),
+                const SizedBox(height: 8),
+                // 캘린더 그리드
+                Expanded(
+                  child: GridView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 7,
+                      childAspectRatio: cellWidth / cellHeight,
+                    ),
+                    itemCount: 42,
+                    itemBuilder: (context, index) {
+                      final days = _getDaysInMonth(currentMonth);
+                      final date = days[index];
+                      final isCurrentMonth = _isCurrentMonth(
+                        date,
+                        currentMonth,
+                      );
+                      final isToday = _isToday(date);
+                      final imageUrl = _getLatestImageUrl(date);
 
-                    return GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => onDateSelected(date),
-                      child: Container(
-                        margin: const EdgeInsets.all(2),
-                        decoration: imageUrl != null && isCurrentMonth
-                            ? BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                              )
-                            : null,
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            // 배경 이미지
-                            if (imageUrl != null && isCurrentMonth)
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  _getProxiedImageUrl(imageUrl),
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const SizedBox.shrink();
-                                  },
+                      return GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => onDateSelected(date),
+                        child: Container(
+                          margin: const EdgeInsets.all(2),
+                          decoration: imageUrl != null && isCurrentMonth
+                              ? BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                )
+                              : null,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              // 배경 이미지
+                              if (imageUrl != null && isCurrentMonth)
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    _getProxiedImageUrl(imageUrl),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const SizedBox.shrink();
+                                    },
+                                  ),
                                 ),
-                              ),
-                            // 날짜 텍스트
-                            Align(
-                              alignment: Alignment.topCenter,
-                              child: Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: isToday && isCurrentMonth
-                                    ? Container(
-                                        width: 24,
-                                        height: 24,
-                                        decoration: BoxDecoration(
-                                          color: Colors.green,
-                                          shape: BoxShape.rectangle,
-                                          borderRadius: BorderRadius.circular(
-                                            4,
-                                          ),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            '${date.day}',
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.normal,
-                                              color: Colors.white,
+                              // 날짜 텍스트
+                              Align(
+                                alignment: Alignment.topCenter,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: isToday && isCurrentMonth
+                                      ? Container(
+                                          width: 24,
+                                          height: 24,
+                                          decoration: BoxDecoration(
+                                            color: Colors.green,
+                                            shape: BoxShape.rectangle,
+                                            borderRadius: BorderRadius.circular(
+                                              4,
                                             ),
                                           ),
+                                          child: Center(
+                                            child: Text(
+                                              '${date.day}',
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.normal,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        )
+                                      : Text(
+                                          '${date.day}',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.normal,
+                                            color: !isCurrentMonth
+                                                ? Colors.grey.shade300
+                                                : (imageUrl != null &&
+                                                          isCurrentMonth
+                                                      ? Colors.white
+                                                      : Colors.black87),
+                                            shadows:
+                                                imageUrl != null &&
+                                                    isCurrentMonth
+                                                ? [
+                                                    Shadow(
+                                                      offset: const Offset(
+                                                        0,
+                                                        1,
+                                                      ),
+                                                      blurRadius: 3,
+                                                      color: Colors.black
+                                                          .withOpacity(0.5),
+                                                    ),
+                                                  ]
+                                                : null,
+                                          ),
                                         ),
-                                      )
-                                    : Text(
-                                        '${date.day}',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.normal,
-                                          color: !isCurrentMonth
-                                              ? Colors.grey.shade300
-                                              : (imageUrl != null &&
-                                                        isCurrentMonth
-                                                    ? Colors.white
-                                                    : Colors.black87),
-                                          shadows:
-                                              imageUrl != null && isCurrentMonth
-                                              ? [
-                                                  Shadow(
-                                                    offset: const Offset(0, 1),
-                                                    blurRadius: 3,
-                                                    color: Colors.black
-                                                        .withOpacity(0.5),
-                                                  ),
-                                                ]
-                                              : null,
-                                        ),
-                                      ),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
