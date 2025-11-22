@@ -14,15 +14,6 @@ class DiaryDetailScreen extends StatelessWidget {
     return '$year.$month.$day';
   }
 
-  String _formatDateTime(DateTime dateTime) {
-    final year = dateTime.year;
-    final month = dateTime.month.toString().padLeft(2, '0');
-    final day = dateTime.day.toString().padLeft(2, '0');
-    final hour = dateTime.hour.toString().padLeft(2, '0');
-    final minute = dateTime.minute.toString().padLeft(2, '0');
-    return '$year.$month.$day $hour:$minute';
-  }
-
   String _getProxiedImageUrl(String originalUrl) {
     try {
       final projectId = Firebase.app().options.projectId;
@@ -41,11 +32,15 @@ class DiaryDetailScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
+        automaticallyImplyLeading: false,
         leading: Padding(
           padding: const EdgeInsets.only(left: 12),
-          child: GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: const Icon(Icons.chevron_left, color: Colors.black),
+          child: IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.chevron_left, color: Colors.black),
+            constraints: const BoxConstraints(),
+            padding: EdgeInsets.zero,
+            visualDensity: VisualDensity.compact,
           ),
         ),
         title: Text(
@@ -57,11 +52,14 @@ class DiaryDetailScreen extends StatelessWidget {
           ),
         ),
         actions: [
-          Material(
-            color: Colors.transparent,
+          Theme(
+            data: Theme.of(
+              context,
+            ).copyWith(splashFactory: InkRipple.splashFactory),
             child: PopupMenuButton<String>(
-              splashRadius: 0,
               icon: const Icon(Icons.more_vert, color: Colors.black),
+              color: Colors.green.shade200,
+              splashRadius: 20,
               onSelected: (value) {
                 if (value == 'edit') {
                   // TODO: 수정 기능 구현
@@ -70,15 +68,37 @@ class DiaryDetailScreen extends StatelessWidget {
                 }
               },
               itemBuilder: (BuildContext context) => [
-                const PopupMenuItem<String>(
+                PopupMenuItem<String>(
                   value: 'edit',
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-                  child: Text('수정'),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 0,
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Text('수정'),
+                      ),
+                    ),
+                  ),
                 ),
-                const PopupMenuItem<String>(
+                PopupMenuItem<String>(
                   value: 'delete',
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-                  child: Text('삭제'),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 0,
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Text('삭제'),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -88,32 +108,28 @@ class DiaryDetailScreen extends StatelessWidget {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 작성 시간
-              Text(
-                _formatDateTime(diary.createdAt),
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-              ),
-              // 이미지들
-              if (diary.imageUrls.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                _buildImageGrid(),
-              ],
-              // 내용
-              if (diary.content.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Text(
-                  diary.content,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    height: 1.6,
-                    color: Colors.black87,
+          child: Center(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 이미지들
+                if (diary.imageUrls.isNotEmpty) ...[_buildImageGrid()],
+                // 내용
+                if (diary.content.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    diary.content,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      height: 1.6,
+                      color: Colors.black87,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -121,50 +137,21 @@ class DiaryDetailScreen extends StatelessWidget {
   }
 
   Widget _buildImageGrid() {
-    if (diary.imageUrls.length == 1) {
-      // 이미지가 1개일 때는 전체 너비로 표시
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Image.network(
-          _getProxiedImageUrl(diary.imageUrls.first),
-          width: double.infinity,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              width: double.infinity,
-              height: 200,
-              color: Colors.grey.shade200,
-              child: const Icon(Icons.image, size: 50, color: Colors.grey),
-            );
-          },
-        ),
-      );
-    } else if (diary.imageUrls.length == 2) {
-      // 이미지가 2개일 때는 2열로 표시
-      return Row(
-        children: [
-          Expanded(child: _buildImageItem(diary.imageUrls[0], 0)),
-          const SizedBox(width: 8),
-          Expanded(child: _buildImageItem(diary.imageUrls[1], 1)),
-        ],
-      );
-    } else {
-      // 이미지가 3개 이상일 때는 그리드로 표시
-      return GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 8,
-          childAspectRatio: 1,
-        ),
+    const double imageHeight = 150; // 2:3 비율
+
+    return SizedBox(
+      height: imageHeight,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
         itemCount: diary.imageUrls.length,
         itemBuilder: (context, index) {
-          return _buildImageItem(diary.imageUrls[index], index);
+          return Padding(
+            padding: EdgeInsets.only(left: index == 0 ? 0 : 8),
+            child: _buildImageItem(diary.imageUrls[index], index),
+          );
         },
-      );
-    }
+      ),
+    );
   }
 
   Widget _buildImageItem(String imageUrl, int index) {
@@ -176,11 +163,13 @@ class DiaryDetailScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         child: Image.network(
           _getProxiedImageUrl(imageUrl),
-          width: double.infinity,
-          height: double.infinity,
+          width: 100,
+          height: 150,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
             return Container(
+              width: 100,
+              height: 150,
               color: Colors.grey.shade200,
               child: const Icon(Icons.image, size: 50, color: Colors.grey),
             );

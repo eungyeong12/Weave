@@ -5,6 +5,7 @@ import 'package:weave/domain/entities/diary/diary.dart';
 import 'package:weave/presentation/widgets/search/search_bar.dart';
 import 'package:weave/presentation/widgets/gallery/month_picker_bottom_sheet.dart';
 import 'package:weave/presentation/screens/diary/diary_detail_screen.dart';
+import 'package:weave/presentation/screens/record/record_detail_screen.dart';
 
 class GalleryWidget extends StatefulWidget {
   final List<Record> records;
@@ -320,7 +321,15 @@ class _GalleryItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // TODO: 상세 화면으로 이동
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => RecordDetailScreen(
+              record: record,
+              getProxiedImageUrl: getProxiedImageUrl,
+            ),
+          ),
+        );
       },
       child: Container(
         decoration: BoxDecoration(

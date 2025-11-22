@@ -17,31 +17,38 @@ class ImageListSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageHeight = 120.0;
-    final imageWidth = imageHeight * 2 / 3; // 2:3 비율
+    const double imageWidth = 80;
+    const double imageHeight = 120; // 2:3 비율
 
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 16),
       child: SizedBox(
         height: imageHeight,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           itemCount: images.length + 1, // 사진들 + 추가 버튼
           itemBuilder: (context, index) {
             if (index == images.length) {
               // 사진 추가 버튼
-              return AddImageButton(
-                onTap: onAddImage,
-                width: imageWidth,
-                height: imageHeight,
+              return Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: AddImageButton(
+                  onTap: onAddImage,
+                  width: imageWidth,
+                  height: imageHeight,
+                ),
               );
             }
             // 사진 아이템
-            return ImageItem(
-              imageFile: images[index],
-              width: imageWidth,
-              height: imageHeight,
-              onRemove: () => onRemoveImage(index),
+            return Padding(
+              padding: EdgeInsets.only(left: index == 0 ? 0 : 8),
+              child: ImageItem(
+                imageFile: images[index],
+                width: imageWidth,
+                height: imageHeight,
+                onRemove: () => onRemoveImage(index),
+              ),
             );
           },
         ),

@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:weave/domain/entities/record/record.dart';
 import 'package:weave/domain/entities/diary/diary.dart';
 import 'package:weave/presentation/screens/diary/diary_detail_screen.dart';
+import 'package:weave/presentation/screens/record/record_detail_screen.dart';
 
 class DatePostsBottomSheet {
   static void show(
@@ -206,110 +207,81 @@ class _RecordItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        children: [
-          // 이미지 영역
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(12),
-              bottomLeft: Radius.circular(12),
+    return GestureDetector(
+      onTap: () {
+        Navigator.pop(context);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => RecordDetailScreen(
+              record: record,
+              getProxiedImageUrl: getProxiedImageUrl,
             ),
-            child: record.imageUrl != null && record.imageUrl!.isNotEmpty
-                ? Image.network(
-                    getProxiedImageUrl(record.imageUrl!),
-                    width: 92,
-                    height: 92,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: 92,
-                        height: 92,
-                        color: Colors.grey.shade200,
-                        child: Icon(
-                          getTypeIcon(record.type),
-                          color: Colors.grey.shade400,
-                          size: 32,
-                        ),
-                      );
-                    },
-                  )
-                : Container(
-                    width: 92,
-                    height: 92,
-                    color: Colors.grey.shade200,
-                    child: Icon(
-                      getTypeIcon(record.type),
-                      color: Colors.grey.shade400,
-                      size: 32,
-                    ),
-                  ),
           ),
-          // 정보 영역
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Row(
+          children: [
+            // 이미지 영역
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                bottomLeft: Radius.circular(12),
+              ),
+              child: record.imageUrl != null && record.imageUrl!.isNotEmpty
+                  ? Image.network(
+                      getProxiedImageUrl(record.imageUrl!),
+                      width: 92,
+                      height: 92,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 92,
+                          height: 92,
+                          color: Colors.grey.shade200,
+                          child: Icon(
+                            getTypeIcon(record.type),
+                            color: Colors.grey.shade400,
+                            size: 32,
+                          ),
+                        );
+                      },
+                    )
+                  : Container(
+                      width: 92,
+                      height: 92,
+                      color: Colors.grey.shade200,
+                      child: Icon(
                         getTypeIcon(record.type),
-                        size: 10,
-                        color: Colors.grey.shade600,
+                        color: Colors.grey.shade400,
+                        size: 32,
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _getTypeName(record.type),
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    record.title,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (record.content.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      record.content,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade700,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                  if (record.rating > 0) ...[
-                    const SizedBox(height: 2),
+            ),
+            // 정보 영역
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Row(
                       children: [
                         Icon(
-                          Icons.star,
-                          size: 13,
-                          color: Colors.amber.shade600,
+                          getTypeIcon(record.type),
+                          size: 10,
+                          color: Colors.grey.shade600,
                         ),
-                        const SizedBox(width: 2),
+                        const SizedBox(width: 4),
                         Text(
-                          record.rating.toStringAsFixed(1),
+                          _getTypeName(record.type),
                           style: TextStyle(
                             fontSize: 10,
                             color: Colors.grey.shade600,
@@ -317,12 +289,55 @@ class _RecordItem extends StatelessWidget {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 2),
+                    Text(
+                      record.title,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (record.content.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        record.content,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade700,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    if (record.rating > 0) ...[
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.star,
+                            size: 13,
+                            color: Colors.amber.shade600,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            record.rating.toStringAsFixed(1),
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

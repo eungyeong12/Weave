@@ -44,7 +44,7 @@ class _StarRatingState extends State<StarRating> {
 
   @override
   Widget build(BuildContext context) {
-    final color = widget.color ?? Colors.black;
+    final color = widget.color ?? Colors.amber.shade600;
 
     return GestureDetector(
       onPanUpdate: (details) {

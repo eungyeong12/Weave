@@ -87,6 +87,17 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
     return '$year.$month.$day';
   }
 
+  String _formatPubDate(String pubDate) {
+    // '20230714' 형식을 '2024.07.14' 형식으로 변환
+    if (pubDate.length == 8) {
+      final year = pubDate.substring(0, 4);
+      final month = pubDate.substring(4, 6);
+      final day = pubDate.substring(6, 8);
+      return '$year.$month.$day';
+    }
+    return pubDate;
+  }
+
   List<Widget> _buildInfoWidgets() {
     switch (widget.type) {
       case RecordType.book:
@@ -96,7 +107,7 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
           if (book.publisher != null)
             _InfoRow(label: '출판사', value: book.publisher!),
           if (book.pubDate != null)
-            _InfoRow(label: '출판일', value: book.pubDate!),
+            _InfoRow(label: '출판일', value: _formatPubDate(book.pubDate!)),
         ];
       case RecordType.movie:
         final movie = widget.movie!;
@@ -374,6 +385,7 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
                               ),
                               maxLines: 3,
                               overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 8),
                             ..._buildInfoWidgets(),
@@ -391,6 +403,7 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
                     bottom: 12,
                   ),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       StarRating(
                         rating: _rating,
@@ -431,20 +444,17 @@ class _InfoRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 50,
-            child: Text(
-              label,
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-            ),
+          Text(
+            label,
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 11, color: Colors.black87),
-            ),
+          const SizedBox(width: 8),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 11, color: Colors.black87),
           ),
         ],
       ),
