@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:weave/presentation/widgets/calendar/calendar_widget.dart';
+import 'package:weave/presentation/widgets/calendar/date_posts_bottom_sheet.dart';
 import 'package:weave/presentation/widgets/category/category_bottom_sheet.dart';
 import 'package:weave/presentation/screens/diary/daily_diary_write_screen.dart';
 import 'package:weave/presentation/widgets/gallery/gallery_widget.dart';
@@ -79,12 +80,45 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         _selectedDate = date;
       });
     }
-    // bottomSheet 표시
-    CategoryBottomSheet.show(
-      context,
-      _handleCategorySelection,
-      selectedDate: _selectedDate,
-    );
+
+    // 해당 날짜의 게시물 확인
+    final homeState = ref.read(homeViewModelProvider);
+    final dayRecords = homeState.records.where((record) {
+      final recordDate = record.date;
+      return recordDate.year == date.year &&
+          recordDate.month == date.month &&
+          recordDate.day == date.day;
+    }).toList();
+
+    final dayDiaries = homeState.diaries.where((diary) {
+      final diaryDate = diary.date;
+      return diaryDate.year == date.year &&
+          diaryDate.month == date.month &&
+          diaryDate.day == date.day;
+    }).toList();
+
+    // 게시물이 있으면 게시물 bottom sheet, 없으면 카테고리 bottom sheet 표시
+    if (dayRecords.isNotEmpty || dayDiaries.isNotEmpty) {
+      DatePostsBottomSheet.show(
+        context,
+        date,
+        homeState.records,
+        homeState.diaries,
+        onCategorySelected: (category) {
+          CategoryBottomSheet.show(
+            context,
+            _handleCategorySelection,
+            selectedDate: _selectedDate,
+          );
+        },
+      );
+    } else {
+      CategoryBottomSheet.show(
+        context,
+        _handleCategorySelection,
+        selectedDate: _selectedDate,
+      );
+    }
   }
 
   void _handleCategorySelection(String category) {

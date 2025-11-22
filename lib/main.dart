@@ -76,7 +76,7 @@ class _MyAppState extends ConsumerState<MyApp> {
             color: const Color.fromARGB(255, 240, 240, 240).withOpacity(0.5),
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 460),
+                constraints: const BoxConstraints(maxWidth: 380),
                 child: child!,
               ),
             ),

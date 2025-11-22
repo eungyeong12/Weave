@@ -227,6 +227,7 @@ class CalendarWidget extends StatelessWidget {
                     final imageUrl = _getLatestImageUrl(date);
 
                     return GestureDetector(
+                      behavior: HitTestBehavior.opaque,
                       onTap: () => onDateSelected(date),
                       child: Container(
                         margin: const EdgeInsets.all(2),
