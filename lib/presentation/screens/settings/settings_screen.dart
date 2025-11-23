@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:weave/di/injector.dart';
 import 'package:weave/presentation/screens/auth/login_screen.dart';
 import 'package:weave/presentation/screens/auth/pin_setup_screen.dart';
+import 'package:weave/presentation/screens/auth/pin_change_screen.dart';
 import 'package:weave/presentation/widgets/common/delete_confirmation_dialog.dart';
 import 'package:weave/core/services/biometric_service.dart';
 import 'package:weave/core/services/pin_service.dart';
@@ -121,6 +122,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               onTap: () => _togglePinLock(),
             ),
+            if (_isPinLockEnabled)
+              _buildSettingItem(
+                icon: Icons.lock_reset,
+                title: '비밀번호 변경',
+                trailing: null,
+                onTap: () => _showPinChangeScreen(),
+              ),
             // 웹에서는 생체 인증 옵션 숨김
             if (!kIsWeb)
               _buildSettingItem(
@@ -474,6 +482,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void _toggleBiometricLock() {
     if (_isPinLockEnabled && _isBiometricAvailable && !_isAuthenticating) {
       _handleBiometricChange(!_isBiometricLockEnabled);
+    }
+  }
+
+  void _showPinChangeScreen() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const PinChangeScreen()),
+    );
+    if (result == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('비밀번호가 변경되었습니다.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
   }
 }
