@@ -33,11 +33,11 @@ class DiaryTextField extends StatelessWidget {
           maxLines: null,
           expands: false,
           textAlignVertical: TextAlignVertical.top,
-          style: const TextStyle(fontSize: 14),
+          style: const TextStyle(fontSize: 15),
           onChanged: onChanged,
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 15),
             filled: true,
             fillColor: Colors.transparent,
             hoverColor: Colors.transparent,

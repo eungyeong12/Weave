@@ -228,6 +228,8 @@ class _GalleryWidgetState extends State<GalleryWidget> {
               icon: const Icon(Icons.settings, color: Colors.grey),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
             ),
             const SizedBox(width: 8),
             if (kIsWeb) const SizedBox(width: 8),
