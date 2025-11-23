@@ -35,6 +35,9 @@ class _EmailPasswordFormState extends State<EmailPasswordForm> {
   final _emailController = TextEditingController();
   // 비밀번호 입력을 관리하는 TextEditingController
   final _passwordController = TextEditingController();
+  // 포커스 노드
+  final _emailFocusNode = FocusNode();
+  final _passwordFocusNode = FocusNode();
   // 비밀번호 표시 여부를 관리하는 변수
   bool _obscurePassword = true;
   // 로그인/회원가입 모드를 관리하는 변수
@@ -61,6 +64,8 @@ class _EmailPasswordFormState extends State<EmailPasswordForm> {
     // 위젯이 제거될 때 컨트롤러를 정리하여 메모리 누수 방지
     _emailController.dispose();
     _passwordController.dispose();
+    _emailFocusNode.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
@@ -117,7 +122,13 @@ class _EmailPasswordFormState extends State<EmailPasswordForm> {
           // 이메일 입력 필드
           TextFormField(
             controller: _emailController,
+            focusNode: _emailFocusNode,
             keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) {
+              // 이메일 입력 완료 시 비밀번호 필드로 포커스 이동
+              _passwordFocusNode.requestFocus();
+            },
             style: const TextStyle(fontSize: 14),
             decoration: InputDecoration(
               hintText: '이메일',
@@ -163,7 +174,13 @@ class _EmailPasswordFormState extends State<EmailPasswordForm> {
           // 비밀번호 입력 필드
           TextFormField(
             controller: _passwordController,
+            focusNode: _passwordFocusNode,
             obscureText: _obscurePassword,
+            textInputAction: TextInputAction.done,
+            onFieldSubmitted: (_) {
+              // 비밀번호 입력 완료 시 자동으로 로그인/회원가입 실행
+              _submit();
+            },
             style: const TextStyle(fontSize: 14),
             decoration: InputDecoration(
               hintText: '비밀번호',

@@ -104,15 +104,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               children: [
                 const SizedBox(height: 60),
                 // 로고 영역
-                const Text(
-                  'Weave',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.w400,
-                    letterSpacing: -1.0,
-                    color: Colors.black87,
-                  ),
+                Image.asset(
+                  'assets/images/logo.png',
+                  width: 80,
+                  height: 80,
+                  fit: BoxFit.contain,
                 ),
                 const SizedBox(height: 40),
                 // 이메일/비밀번호 로그인 폼
