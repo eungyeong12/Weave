@@ -10,7 +10,9 @@ import 'data/models/user/user_dto.dart';
 import 'presentation/screens/auth/login_screen.dart';
 import 'presentation/screens/home/home_screen.dart';
 import 'presentation/screens/auth/lock_screen.dart';
+import 'presentation/screens/auth/pin_lock_screen.dart';
 import 'core/services/biometric_service.dart';
+import 'core/services/pin_service.dart';
 
 void main() async {
   // Flutter 바인딩 초기화
@@ -97,30 +99,50 @@ class _MyAppState extends ConsumerState<MyApp> {
       return const LoginScreen();
     }
 
-    // 웹에서는 생체 인증을 사용하지 않으므로 바로 홈 화면으로 이동
-    if (kIsWeb) {
-      return const HomeScreen();
-    }
-
-    // 생체 인증이 활성화되어 있는지 확인
+    // 비밀번호와 생체 인증 상태 확인
+    final pinService = PinService();
     final biometricService = BiometricService();
-    return FutureBuilder<bool>(
-      future: biometricService.isBiometricEnabled(),
+
+    return FutureBuilder<Map<String, bool>>(
+      future: Future.wait([
+        pinService.isPinEnabled(),
+        kIsWeb ? Future.value(false) : biometricService.isBiometricEnabled(),
+      ]).then((results) => {'pin': results[0], 'biometric': results[1]}),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          // 로딩 중에는 빈 화면 또는 로딩 인디케이터 표시
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const Scaffold(backgroundColor: Colors.white);
         }
 
-        // 생체 인증이 활성화되어 있으면 잠금 화면, 아니면 홈 화면
-        // 앱 실행 시마다 인증을 요구하므로 항상 잠금 화면으로 이동
-        if (snapshot.data == true) {
-          return const LockScreen();
-        } else {
+        final pinEnabled = snapshot.data?['pin'] ?? false;
+        final biometricEnabled = snapshot.data?['biometric'] ?? false;
+
+        // 비밀번호가 비활성화되어 있으면 생체 인증도 무시 (비밀번호가 필수)
+        if (!pinEnabled) {
           return const HomeScreen();
         }
+
+        // 둘 다 활성화되어 있으면 우선순위: 생체 인증 > 비밀번호
+        if (pinEnabled && biometricEnabled) {
+          // 생체 인증이 세션 인증이 안 되어 있으면 생체 인증 화면으로
+          if (!biometricService.isAuthenticatedInSession()) {
+            return const LockScreen();
+          }
+          // 생체 인증은 성공했지만 비밀번호가 세션 인증이 안 되어 있으면 비밀번호 화면으로
+          if (!pinService.isAuthenticatedInSession()) {
+            return const PinLockScreen();
+          }
+        }
+        // 비밀번호만 활성화되어 있고 세션 인증이 안 되어 있으면 비밀번호 잠금 화면
+        else if (pinEnabled && !pinService.isAuthenticatedInSession()) {
+          return const PinLockScreen();
+        }
+        // 생체 인증만 활성화되어 있고 세션 인증이 안 되어 있으면 생체 인증 잠금 화면
+        else if (biometricEnabled &&
+            !biometricService.isAuthenticatedInSession()) {
+          return const LockScreen();
+        }
+
+        return const HomeScreen();
       },
     );
   }

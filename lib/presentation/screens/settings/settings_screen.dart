@@ -3,8 +3,10 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:weave/di/injector.dart';
 import 'package:weave/presentation/screens/auth/login_screen.dart';
+import 'package:weave/presentation/screens/auth/pin_setup_screen.dart';
 import 'package:weave/presentation/widgets/common/delete_confirmation_dialog.dart';
 import 'package:weave/core/services/biometric_service.dart';
+import 'package:weave/core/services/pin_service.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -20,12 +22,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _isBiometricAvailable = false;
   bool _isAuthenticating = false; // 인증 중 플래그 추가
   final BiometricService _biometricService = BiometricService();
+  final PinService _pinService = PinService();
 
   @override
   void initState() {
     super.initState();
     _checkBiometricAvailability();
     _loadBiometricSetting();
+    _loadPinSetting();
   }
 
   Future<void> _checkBiometricAvailability() async {
@@ -42,6 +46,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (mounted) {
       setState(() {
         _isBiometricLockEnabled = isEnabled;
+      });
+    }
+  }
+
+  Future<void> _loadPinSetting() async {
+    final isEnabled = await _pinService.isPinEnabled();
+    if (mounted) {
+      setState(() {
+        _isPinLockEnabled = isEnabled;
       });
     }
   }
@@ -67,6 +80,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             constraints: const BoxConstraints(),
             padding: EdgeInsets.zero,
             visualDensity: VisualDensity.compact,
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            hoverColor: Colors.transparent,
+            focusColor: Colors.transparent,
           ),
         ),
         title: const Text(
@@ -96,17 +113,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             _buildSettingItem(
               icon: Icons.lock_outline,
-              title: 'PIN 번호 잠금',
+              title: '비밀번호 잠금',
               trailing: Switch(
                 value: _isPinLockEnabled,
-                onChanged: (value) {
-                  setState(() {
-                    _isPinLockEnabled = value;
-                    // TODO: PIN 번호 잠금 설정 구현
-                  });
-                },
+                onChanged: (value) => _handlePinLockChange(value),
                 activeColor: Colors.green,
               ),
+              onTap: () => _togglePinLock(),
             ),
             // 웹에서는 생체 인증 옵션 숨김
             if (!kIsWeb)
@@ -115,65 +128,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 title: '생체 인증',
                 trailing: Switch(
                   value: _isBiometricLockEnabled,
-                  onChanged: (_isBiometricAvailable && !_isAuthenticating)
-                      ? (value) async {
-                          // 이미 인증 중이면 무시
-                          if (_isAuthenticating) return;
-
-                          setState(() {
-                            _isAuthenticating = true;
-                          });
-
-                          try {
-                            if (value) {
-                              // 생체 인증 활성화: 다이얼로그 없이 바로 활성화
-                              // 실제 인증은 앱 실행 시에만 수행됨
-                              await _biometricService.setBiometricEnabled(true);
-                              if (mounted) {
-                                setState(() {
-                                  _isBiometricLockEnabled = true;
-                                  _isAuthenticating = false;
-                                });
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      '생체 인증이 활성화되었습니다. 다음 앱 실행부터 생체 인증이 요구됩니다.',
-                                    ),
-                                    duration: Duration(seconds: 3),
-                                  ),
-                                );
-                              }
-                            } else {
-                              // 생체 인증 비활성화
-                              await _biometricService.setBiometricEnabled(
-                                false,
-                              );
-                              if (mounted) {
-                                setState(() {
-                                  _isBiometricLockEnabled = false;
-                                  _isAuthenticating = false;
-                                });
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('생체 인증이 비활성화되었습니다.'),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              }
-                            }
-                          } catch (e) {
-                            // 에러 발생 시 플래그 초기화
-                            if (mounted) {
-                              setState(() {
-                                _isAuthenticating = false;
-                                _isBiometricLockEnabled = false;
-                              });
-                            }
-                          }
-                        }
+                  onChanged:
+                      (_isPinLockEnabled &&
+                          _isBiometricAvailable &&
+                          !_isAuthenticating)
+                      ? (value) => _handleBiometricChange(value)
                       : null,
                   activeColor: Colors.green,
                 ),
+                onTap:
+                    (_isPinLockEnabled &&
+                        _isBiometricAvailable &&
+                        !_isAuthenticating)
+                    ? () => _toggleBiometricLock()
+                    : null,
               ),
             const SizedBox(height: 24),
             // 계정 섹션
@@ -299,6 +267,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _logout() async {
     // 로그아웃 시 세션 인증 상태 초기화
     _biometricService.clearSessionAuth();
+    _pinService.clearSessionAuth();
 
     final viewModel = ref.read(authViewModelProvider.notifier);
     await viewModel.signOut();
@@ -403,6 +372,108 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         );
       }
+    }
+  }
+
+  Future<void> _handlePinLockChange(bool value) async {
+    if (value) {
+      // 비밀번호 활성화: 비밀번호 설정 화면으로 이동
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const PinSetupScreen()),
+      );
+      if (result == true && mounted) {
+        // 비밀번호 설정 성공
+        setState(() {
+          _isPinLockEnabled = true;
+        });
+      }
+    } else {
+      // 비밀번호 비활성화
+      await _pinService.setPinEnabled(false);
+      await _pinService.deletePinCode();
+
+      // 비밀번호 잠금 해제 시 생체 인증도 자동으로 해제
+      // 실제 Firestore에 저장된 생체 인증 상태를 확인하고 비활성화
+      final isBiometricEnabled = await _biometricService.isBiometricEnabled();
+      if (isBiometricEnabled) {
+        await _biometricService.setBiometricEnabled(false);
+      }
+
+      if (mounted) {
+        setState(() {
+          _isPinLockEnabled = false;
+          _isBiometricLockEnabled = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('비밀번호 잠금이 비활성화되었습니다.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  void _togglePinLock() {
+    _handlePinLockChange(!_isPinLockEnabled);
+  }
+
+  Future<void> _handleBiometricChange(bool value) async {
+    // 이미 인증 중이면 무시
+    if (_isAuthenticating) return;
+
+    setState(() {
+      _isAuthenticating = true;
+    });
+
+    try {
+      if (value) {
+        // 생체 인증 활성화: 다이얼로그 없이 바로 활성화
+        // 실제 인증은 앱 실행 시에만 수행됨
+        await _biometricService.setBiometricEnabled(true);
+        if (mounted) {
+          setState(() {
+            _isBiometricLockEnabled = true;
+            _isAuthenticating = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('생체 인증이 활성화되었습니다. 다음 앱 실행부터 생체 인증이 요구됩니다.'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      } else {
+        // 생체 인증 비활성화
+        await _biometricService.setBiometricEnabled(false);
+        if (mounted) {
+          setState(() {
+            _isBiometricLockEnabled = false;
+            _isAuthenticating = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('생체 인증이 비활성화되었습니다.'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // 에러 발생 시 플래그 초기화
+      if (mounted) {
+        setState(() {
+          _isAuthenticating = false;
+          _isBiometricLockEnabled = false;
+        });
+      }
+    }
+  }
+
+  void _toggleBiometricLock() {
+    if (_isPinLockEnabled && _isBiometricAvailable && !_isAuthenticating) {
+      _handleBiometricChange(!_isBiometricLockEnabled);
     }
   }
 }

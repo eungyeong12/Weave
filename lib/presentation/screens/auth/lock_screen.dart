@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:weave/core/services/biometric_service.dart';
+import 'package:weave/core/services/pin_service.dart';
 import 'package:weave/presentation/screens/home/home_screen.dart';
+import 'package:weave/presentation/screens/auth/pin_lock_screen.dart';
 
 class LockScreen extends StatefulWidget {
   const LockScreen({super.key});
@@ -11,6 +13,7 @@ class LockScreen extends StatefulWidget {
 
 class _LockScreenState extends State<LockScreen> {
   final BiometricService _biometricService = BiometricService();
+  final PinService _pinService = PinService();
   bool _isAuthenticating = false;
   bool _isAuthenticated = false; // 인증 성공 여부 추적
 
@@ -45,30 +48,49 @@ class _LockScreenState extends State<LockScreen> {
 
       final result = await _biometricService.authenticate(
         reason: '앱을 잠금 해제하려면 생체 인증이 필요합니다',
-        biometricOnly: false, // PIN/패턴도 허용
+        biometricOnly: true, // 생체 인증만 허용 (PIN/패턴 대체 불가)
       );
 
       if (mounted) {
         if (result.success) {
           // 인증 성공 플래그 설정
           _isAuthenticated = true;
-          // 인증 성공 시 홈 화면으로 이동
+
+          // 생체 인증 성공 시 비밀번호는 생략하고 바로 홈 화면으로 이동
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => const HomeScreen()),
           );
         } else {
-          // 인증 실패 시 다시 시도 가능하도록 상태 업데이트
-          setState(() {
-            _isAuthenticating = false;
-          });
-          // 에러 메시지가 있으면 표시
-          if (result.errorMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(result.errorMessage!),
-                duration: const Duration(seconds: 3),
-              ),
+          // 인증 실패 시 처리
+          final isPinEnabled = await _pinService.isPinEnabled();
+
+          // 인증 횟수 초과로 생체 인증이 잠긴 경우 또는 비밀번호가 활성화되어 있는 경우
+          final isLockedOut =
+              result.errorMessage != null &&
+              (result.errorMessage!.contains('잠겨') ||
+                  result.errorMessage!.contains('영구적으로') ||
+                  result.errorMessage!.contains('lockedout') ||
+                  result.errorMessage!.contains('permanently'));
+
+          if (isPinEnabled || isLockedOut) {
+            // 비밀번호가 활성화되어 있거나 생체 인증이 잠긴 경우 비밀번호 화면으로 이동
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => const PinLockScreen()),
             );
+          } else {
+            // 비밀번호가 없고 생체 인증이 잠기지 않은 경우 다시 시도 가능하도록 상태 업데이트
+            setState(() {
+              _isAuthenticating = false;
+            });
+            // 에러 메시지가 있으면 표시
+            if (result.errorMessage != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(result.errorMessage!),
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            }
           }
         }
       }

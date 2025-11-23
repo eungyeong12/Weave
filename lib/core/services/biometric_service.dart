@@ -162,6 +162,11 @@ class BiometricService {
     return _isAuthenticatedInSession;
   }
 
+  // 세션 인증 상태 설정 (비밀번호 인증 성공 시 생체 인증도 자동 성공 처리)
+  void setSessionAuth(bool authenticated) {
+    _isAuthenticatedInSession = authenticated;
+  }
+
   // 세션 인증 상태 초기화 (로그아웃 시 등)
   void clearSessionAuth() {
     _isAuthenticatedInSession = false;
