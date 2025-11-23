@@ -24,13 +24,6 @@ class BookDto extends Book {
       }
     }
 
-    // 디버깅: 이미지 URL 출력
-    if (imageUrl != null) {
-      print('🖼️ 이미지 URL: $imageUrl');
-    } else {
-      print('⚠️ 이미지 URL 없음. json[image]: ${json['image']}');
-    }
-
     return BookDto(
       title: (json['title'] ?? '').toString().replaceAll(
         RegExp(r'<[^>]*>'),

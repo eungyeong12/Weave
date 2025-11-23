@@ -449,7 +449,7 @@ class _RecordWriteScreenState extends ConsumerState<RecordWriteScreen> {
                               ),
                               maxLines: 3,
                               overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
+                              textAlign: TextAlign.left,
                             ),
                             const SizedBox(height: 8),
                             ..._buildInfoWidgets(),
