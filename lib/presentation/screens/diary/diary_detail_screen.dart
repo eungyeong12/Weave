@@ -102,7 +102,7 @@ class _DiaryDetailScreenState extends ConsumerState<DiaryDetailScreen> {
   Widget _buildImageItem(String imageUrl, int index) {
     return GestureDetector(
       onTap: () {
-        // TODO: 이미지 확대 보기
+        _showImageFullScreen(index);
       },
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
@@ -120,6 +120,19 @@ class _DiaryDetailScreenState extends ConsumerState<DiaryDetailScreen> {
             );
           },
         ),
+      ),
+    );
+  }
+
+  void _showImageFullScreen(int initialIndex) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => _ImageFullScreenViewer(
+          imageUrls: diary.imageUrls,
+          initialIndex: initialIndex,
+          getProxiedImageUrl: _getProxiedImageUrl,
+        ),
+        fullscreenDialog: true,
       ),
     );
   }
@@ -188,6 +201,104 @@ class _DiaryDetailScreenState extends ConsumerState<DiaryDetailScreen> {
       const SnackBar(
         content: Text('기록이 삭제되었습니다.'),
         duration: Duration(seconds: 2),
+      ),
+    );
+  }
+}
+
+// 이미지 전체 화면 뷰어
+class _ImageFullScreenViewer extends StatefulWidget {
+  final List<String> imageUrls;
+  final int initialIndex;
+  final String Function(String) getProxiedImageUrl;
+
+  const _ImageFullScreenViewer({
+    required this.imageUrls,
+    required this.initialIndex,
+    required this.getProxiedImageUrl,
+  });
+
+  @override
+  State<_ImageFullScreenViewer> createState() => _ImageFullScreenViewerState();
+}
+
+class _ImageFullScreenViewerState extends State<_ImageFullScreenViewer> {
+  late PageController _pageController;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          '${_currentIndex + 1} / ${widget.imageUrls.length}',
+          style: const TextStyle(color: Colors.white),
+        ),
+        centerTitle: true,
+      ),
+      body: PageView.builder(
+        controller: _pageController,
+        itemCount: widget.imageUrls.length,
+        onPageChanged: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        itemBuilder: (context, index) {
+          return Center(
+            child: InteractiveViewer(
+              minScale: 0.5,
+              maxScale: 3.0,
+              child: Image.network(
+                widget.getProxiedImageUrl(widget.imageUrls[index]),
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: Colors.grey.shade900,
+                    child: const Center(
+                      child: Icon(Icons.image, size: 100, color: Colors.grey),
+                    ),
+                  );
+                },
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    color: Colors.grey.shade900,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                            : null,
+                        color: Colors.white,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+        },
       ),
     );
   }
