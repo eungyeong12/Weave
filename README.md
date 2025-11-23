@@ -1,5 +1,10 @@
 # ✏️ Weave(위브) - 도서, 영화·드라마, 공연·전시, 일상 기록을 한 곳에
 
+## 🔗 Links
+
+- **Web:** [웹 브라우저에서 실행하기 (Click)](https://weave-9b2c7.web.app/)
+- **Android App:** [APK 다운로드 (v1.0.0)](https://github.com/eungyeong12/Weave/releases/download/v1.0.0/app-release.apk)
+
 ## 📝 기능 목록
 
 ### 1️⃣ 인증 및 보안
