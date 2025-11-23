@@ -5,6 +5,33 @@
 - **Web:** [웹 브라우저에서 실행하기 (Click)](https://weave-9b2c7.web.app/)
 - **Android App:** [APK 다운로드 (v1.0.0)](https://github.com/eungyeong12/Weave/releases/download/v1.0.0/app-release.apk)
 
+## 🛠️ 기술 스택
+
+### 프론트엔드
+
+![Flutter](https://img.shields.io/badge/Flutter-02569B.svg?&style=for-the-badge&logo=Flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/Dart-0175C2.svg?&style=for-the-badge&logo=Dart&logoColor=white)
+
+### 백엔드 & 인프라
+
+- **Firebase Authentication**
+
+  - 이메일/비밀번호 기반 회원가입 및 로그인, 사용자 세션 관리
+  - 회원 탈퇴 시 사용자 계정 삭제
+
+- **Cloud Firestore**
+
+  - 게시물 데이터 저장
+
+- **Firebase Storage**
+
+  - 일기 이미지 저장
+  - 이미지 업로드/삭제 및 다운로드 URL 관리
+
+- **Cloud Functions**
+  - 외부 API 프록시 서버 역할 (API 키 보안 관리)
+  - 네이버 도서, TMDb 영화/드라마, KOPIS 공연 검색 API 호출 및 CORS 처리
+
 ## 📝 기능 목록
 
 ### 1️⃣ 인증 및 보안
