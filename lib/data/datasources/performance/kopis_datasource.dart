@@ -13,17 +13,12 @@ class KopisDataSource {
     int rows = 10,
   }) async {
     try {
-      debugPrint('🔍 Firebase HTTP Functions 호출 시작: searchPerformances');
-      debugPrint('📝 검색어: $query, 페이지: $page, 행 수: $rows');
-
       // Firebase 프로젝트 정보 가져오기
       final projectId = Firebase.app().options.projectId;
 
       // HTTP Functions URL 구성
       final functionUrl =
           'https://us-central1-$projectId.cloudfunctions.net/searchPerformancesHttp';
-
-      debugPrint('📞 Functions URL: $functionUrl');
 
       // HTTP GET 요청
       final uri = Uri.parse(functionUrl).replace(
@@ -34,10 +29,7 @@ class KopisDataSource {
         },
       );
 
-      debugPrint('📤 HTTP 요청 전송 중...');
       final response = await http.get(uri);
-
-      debugPrint('✅ HTTP 응답 받음: ${response.statusCode}');
 
       if (response.statusCode != 200) {
         throw Exception('공연 검색 실패: HTTP ${response.statusCode}');
@@ -72,9 +64,6 @@ class KopisDataSource {
         throw Exception('공연 검색 실패: 응답 데이터가 올바르지 않습니다.');
       }
     } catch (e, stackTrace) {
-      debugPrint('❌ 오류 발생: $e');
-      debugPrint('📋 Stack trace: $stackTrace');
-
       if (e.toString().contains('ClientException') ||
           e.toString().contains('CORS')) {
         throw Exception(

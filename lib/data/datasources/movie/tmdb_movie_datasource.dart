@@ -12,9 +12,6 @@ class TmdbMovieDataSource {
     int page = 1,
   }) async {
     try {
-      debugPrint('🔍 Firebase HTTP Functions 호출 시작: searchMovies');
-      debugPrint('📝 검색어: $query, 페이지: $page');
-
       // Firebase 프로젝트 정보 가져오기
       final projectId = Firebase.app().options.projectId;
 
@@ -22,17 +19,12 @@ class TmdbMovieDataSource {
       final functionUrl =
           'https://us-central1-$projectId.cloudfunctions.net/searchMoviesHttp';
 
-      debugPrint('📞 Functions URL: $functionUrl');
-
       // HTTP GET 요청
       final uri = Uri.parse(
         functionUrl,
       ).replace(queryParameters: {'query': query, 'page': page.toString()});
 
-      debugPrint('📤 HTTP 요청 전송 중...');
       final response = await http.get(uri);
-
-      debugPrint('✅ HTTP 응답 받음: ${response.statusCode}');
 
       if (response.statusCode != 200) {
         throw Exception('영화 검색 실패: HTTP ${response.statusCode}');
@@ -54,9 +46,6 @@ class TmdbMovieDataSource {
         throw Exception('영화 검색 실패: 응답 데이터가 올바르지 않습니다.');
       }
     } catch (e, stackTrace) {
-      debugPrint('❌ 오류 발생: $e');
-      debugPrint('📋 Stack trace: $stackTrace');
-
       if (e.toString().contains('ClientException') ||
           e.toString().contains('CORS')) {
         throw Exception(

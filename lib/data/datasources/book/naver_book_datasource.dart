@@ -13,9 +13,6 @@ class NaverBookDataSource {
     int display = 10,
   }) async {
     try {
-      debugPrint('🔍 Firebase HTTP Functions 호출 시작: searchBooks');
-      debugPrint('📝 검색어: $query, 시작: $start, 표시: $display');
-
       // Firebase 프로젝트 정보 가져오기
       final projectId = Firebase.app().options.projectId;
 
@@ -23,8 +20,6 @@ class NaverBookDataSource {
       // 기본 리전은 us-central1이지만, 배포된 리전을 확인해야 함
       final functionUrl =
           'https://us-central1-$projectId.cloudfunctions.net/searchBooksHttp';
-
-      debugPrint('📞 Functions URL: $functionUrl');
 
       // HTTP POST 요청
       final uri = Uri.parse(functionUrl).replace(
@@ -35,10 +30,7 @@ class NaverBookDataSource {
         },
       );
 
-      debugPrint('📤 HTTP 요청 전송 중...');
       final response = await http.get(uri);
-
-      debugPrint('✅ HTTP 응답 받음: ${response.statusCode}');
 
       if (response.statusCode != 200) {
         throw Exception('도서 검색 실패: HTTP ${response.statusCode}');
@@ -64,9 +56,6 @@ class NaverBookDataSource {
         throw Exception('도서 검색 실패: 응답 데이터가 올바르지 않습니다.');
       }
     } catch (e, stackTrace) {
-      debugPrint('❌ 오류 발생: $e');
-      debugPrint('📋 Stack trace: $stackTrace');
-
       if (e.toString().contains('ClientException') ||
           e.toString().contains('CORS')) {
         throw Exception(
