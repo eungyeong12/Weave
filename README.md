@@ -34,6 +34,20 @@
 
 **로그아웃 및 회원 탈퇴**: 설정 화면에서 계정 로그아웃 및 서비스 탈퇴 기능 제공
 
+<table>
+  <tr>
+    <td>
+      <img src="https://velog.velcdn.com/images/eungyeong12/post/6858296b-8106-429f-a81c-ed12aa01f41a/image.gif" alt="설명1" />
+    </td>
+    <td>
+      <img src="https://velog.velcdn.com/images/eungyeong12/post/7cbc2ead-b7d3-4d3c-98fd-c279f9d0f722/image.gif" alt="설명2" />
+    </td>
+    <td>
+      <img src="https://velog.velcdn.com/images/eungyeong12/post/4c5f71f1-7e7c-489e-92eb-0fd12c1d7c86/image.gif" alt="설명3" />
+    </td>
+  </tr>
+</table>
+
 ### 2️⃣ 기록 생성 및 관리
 
 **기록 시작**: 메인 화면의 '+' 버튼을 눌러 신규 기록 시작
@@ -49,6 +63,45 @@
 **기록 수정**: 기존에 작성된 기록의 내용을 수정
 
 **기록 삭제**: 기존 기록을 삭제 (삭제 시 확인 팝업 노출)
+
+<table>
+  <tr>
+    <td>
+      <img src="https://velog.velcdn.com/images/eungyeong12/post/6ff2794e-601f-4827-b46b-4c19c7a16302/image.gif" alt="설명1" />
+    </td>
+    <td>
+      <img src="https://velog.velcdn.com/images/eungyeong12/post/d2748ba5-9511-42e5-925f-79519ce71bc4/image.gif" alt="설명2" />
+    </td>
+    <td>
+      <img src="https://velog.velcdn.com/images/eungyeong12/post/a1715c52-e475-4cda-b98a-539a642f9365/image.gif" alt="설명3" />
+    </td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td>
+      <img src="https://velog.velcdn.com/images/eungyeong12/post/ce772e14-54ab-4441-84fb-63e5ebd1d961/image.gif" alt="설명1" />
+    </td>
+    <td>
+      <img src="https://velog.velcdn.com/images/eungyeong12/post/3d5c4c98-f394-4dd6-ac13-25518de1c520/image.gif" alt="설명2" />
+    </td>
+    <td>
+      <img src="https://velog.velcdn.com/images/eungyeong12/post/2bd1994c-f6a6-413a-b38b-7d85062844a2/image.gif" alt="설명3" />
+    </td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td>
+      <img src="https://velog.velcdn.com/images/eungyeong12/post/7aa34273-254f-46e7-8dff-b3f690e98d22/image.gif" alt="설명2" />
+    </td>
+    <td>
+      <img src="https://velog.velcdn.com/images/eungyeong12/post/16886813-c12b-45e8-8eaa-718c23274360/image.gif" alt="설명1" />
+    </td>
+  </tr>
+</table>
 
 ### 3️⃣ 기록 조회 및 탐색
 
@@ -72,8 +125,33 @@
 
 - **일상 기록 상세**: 첨부된 이미지 URL 목록을 스와이프형 뷰어로 표시, 날짜, 일기 텍스트를 표시
 
+<table>
+  <tr>
+    <td>
+      <img src="https://velog.velcdn.com/images/eungyeong12/post/9fad81aa-6572-42fa-b0af-ddcad41a98d9/image.gif" alt="설명1" />
+    </td>
+    <td>
+      <img src="https://velog.velcdn.com/images/eungyeong12/post/a9d65850-2aae-4e0a-a294-77c89333d5f1/image.gif" alt="설명2" />
+    </td>
+    <td>
+      <img src="https://velog.velcdn.com/images/eungyeong12/post/d1586b53-9643-476f-8a3f-f4b6dfc04ac1/image.gif" alt="설명2" />
+    </td>
+  </tr>
+</table>
+
 ### 4️⃣ 검색
 
 **검색 바**: '갤러리 뷰' 상단에 위치.
 
 **키워드 검색**: 기록의 제목과 내용을 기반으로 기록을 필터링.
+
+<table>
+  <tr>
+    <td>
+      <img src="https://velog.velcdn.com/images/eungyeong12/post/5a373e03-5ec8-4656-97ca-e24956438a75/image.gif" alt="설명1" />
+    </td>
+    <td>
+      <img src="https://velog.velcdn.com/images/eungyeong12/post/d3c3202b-a4ca-4390-8f08-d8ad0171043f/image.gif" alt="설명2" />
+    </td>
+  </tr>
+</table>
