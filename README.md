@@ -14,23 +14,13 @@
 
 ### 백엔드 & 인프라
 
-- **Firebase Authentication**
+- **Firebase Authentication**: 이메일/비밀번호 기반 회원가입 및 로그인
 
-  - 이메일/비밀번호 기반 회원가입 및 로그인, 사용자 세션 관리
-  - 회원 탈퇴 시 사용자 계정 삭제
+- **Cloud Firestore**: 게시물 데이터 및 앱 잠금 비밀번호 설정 저장 및 조회
 
-- **Cloud Firestore**
+- **Firebase Storage**: 일기 이미지 파일 저장 및 관리
 
-  - 게시물 데이터 저장
-
-- **Firebase Storage**
-
-  - 일기 이미지 저장
-  - 이미지 업로드/삭제 및 다운로드 URL 관리
-
-- **Cloud Functions**
-  - 외부 API 프록시 서버 역할 (API 키 보안 관리)
-  - 네이버 도서, TMDb 영화/드라마, KOPIS 공연 검색 API 호출 및 CORS 처리
+- **Cloud Functions**: 네이버 도서, TMDb 영화/드라마, KOPIS 공연 검색 API 호출
 
 ## 📝 기능 목록
 
